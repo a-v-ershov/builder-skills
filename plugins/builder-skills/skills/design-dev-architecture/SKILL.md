@@ -78,9 +78,11 @@ Read `docs/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`
 - **Prod-parity over convenience.** Prefer a local stand-in that matches the prod API (e.g. an S3
   API-compatible service in a container for a prod object store) over a convenient mock that
   hides real integration behavior. Flag every remaining local↔prod divergence explicitly.
-- **One command to run it all.** The whole product comes up locally with a single command —
-  seeded, wired, and ready — not a page of manual steps. Snowflake "works on my machine" setups
-  are a failure.
+- **One command to run it all — for the human too.** The whole product comes up locally with a
+  single command — seeded, wired, and ready — not a page of manual steps. The same command serves
+  **both the AI agent and a human developer**: a person must be able to bring up the full
+  environment and actually open/use the running product (and watch logs), not just an agent-only
+  harness. Snowflake "works on my machine" setups are a failure.
 - **The AI must be able to drive and verify.** Design the e2e harness so an agent can exercise
   the flows from `user-flows.research.md` and assert the outcomes autonomously (e.g. Playwright).
 - **Tool facts are researched, not assumed.** Local stand-in API coverage, the e2e framework's
@@ -124,8 +126,10 @@ the user and offer to run `/design-architecture` first. Read the mode.
    container like MinIO/LocalStack for a prod object store; a database container for a managed
    database; an emulator or containerized OSS equivalent for a BaaS). The **Docker Compose
    topology** that brings the whole product up, **seed data**, and **env/secrets** handling (no
-   real secrets in the repo). The **single command** that starts everything seeded and ready. The
-   **divergences** from prod (each a named risk).
+   real secrets in the repo). The **single command** that starts everything seeded and ready —
+   usable by **both the AI agent and a human developer**: capture how a person brings it up and
+   actually opens/uses the running product (the local URL/port, default seeded login, where to
+   watch logs), not just an agent-only harness. The **divergences** from prod (each a named risk).
 2. **The agent's verification loop (Drive it · Prove it · Unblock it) — the heart of this phase.**
    For each surface the product has (drop one that doesn't apply), give the agent the maximum,
    fastest way to close the loop. Fill the matrix:

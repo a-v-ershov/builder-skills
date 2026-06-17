@@ -12,10 +12,13 @@
 
 ## Local-run architecture
 
-> One command brings the whole product up locally, seeded and ready. Local stand-ins are chosen
-> for API parity with the production service.
+> One command brings the whole product up locally, seeded and ready — usable by both the AI agent
+> and a human developer. Local stand-ins are chosen for API parity with the production service.
 
 **Bring it all up:** `<single command, e.g. docker compose up>` → <what it starts, seeded>.
+
+**Human access:** <local URL / port to open, default seeded login, where to watch logs — so a
+person can run and use the product, not only an agent.>
 
 | Component (from architecture) | Prod service | Local stand-in | Why (API parity) | Divergence from prod |
 |-------------------------------|--------------|----------------|-------------------|----------------------|
