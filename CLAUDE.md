@@ -68,7 +68,7 @@ README.md
 ### Installing the skills into another project
 
 ```
-/plugin marketplace add eershoov/builder-skills
+/plugin marketplace add a-v-ershov/builder-skills
 /plugin install builder-skills@builder-skills
 ```
 
