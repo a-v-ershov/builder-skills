@@ -1,6 +1,6 @@
 ---
 name: create-project-spec
-description: "Produce a project's initial documentation end to end, from a raw idea to a buildable spec. Use when starting a new project (or a major new initiative) and you want the full guided flow rather than running each step by hand. Orchestrates the pipeline — validate-idea → define-product-requirements → create-user-flows → design-architecture — pausing for your approval at each step's hard gate, and offering review-doc as a quality check. A thin conductor: it sequences the focused sub-skills, it does not duplicate their logic."
+description: "Produce a project's initial documentation end to end, from a raw idea to a buildable spec. Use when starting a new project (or a major new initiative) and you want the full guided flow rather than running each step by hand. Orchestrates the pipeline — validate-idea → define-product-requirements → create-user-flows → design-architecture → design-dev-architecture — where each phase researches real-world facts, runs an adversarial review (merged in, then removed), and emits a detailed research doc + a short human summary. Asks two setup choices up front (interactive vs autopilot; final combined summary) and can finish with one human-readable spec summary. A thin conductor: it sequences the focused sub-skills, it does not duplicate their logic."
 argument-hint: "[--from <step>]"
 ---
 
@@ -8,65 +8,106 @@ argument-hint: "[--from <step>]"
 
 You are the conductor of the project-documentation pipeline. You do not do the work of each
 phase yourself — you invoke the focused sub-skill for each step (via the Skill tool), let it run
-to its hard gate, get the user's approval, and only then move to the next step.
+its own internal pipeline (research → draft → adversarial review → merge → dual output), and move
+on according to the chosen mode.
 
-The pipeline produces, in order:
+The pipeline produces, in order — each phase keeping **two** files (the reviewer's `*.review.md`
+is intermediate: applied at merge, then deleted):
 
-| Step | Sub-skill | Artifact |
-|------|-----------|----------|
-| 1 | `validate-idea` | `docs/project-spec/idea-validation.md` |
-| 2 | `define-product-requirements` | `docs/project-spec/product-requirements.md` |
-| 3 | `create-user-flows` | `docs/project-spec/user-flows.md` |
-| 4 | `design-architecture` | `docs/project-spec/architecture.md` (+ `docs/project-spec/adr/*`) |
+| Step | Sub-skill | Detailed doc | Human summary |
+|------|-----------|--------------|---------------|
+| 1 | `validate-idea` | `idea-validation.research.md` | `idea-validation.summary.md` |
+| 2 | `define-product-requirements` | `product-requirements.research.md` | `product-requirements.summary.md` |
+| 3 | `create-user-flows` | `user-flows.research.md` | `user-flows.summary.md` |
+| 4 | `design-architecture` | `architecture.research.md` (+ `adr/*`) | `architecture.summary.md` |
+| 5 | `design-dev-architecture` | `dev-architecture.research.md` (+ `adr/*`) | `dev-architecture.summary.md` |
 
-`review-doc` is a reusable quality gate that can be run against any artifact before approval.
+All under `docs/project-spec/`. Each phase researches and reviews itself — there is no separate
+review step to offer, and no review file survives into the final spec.
 
 ## Language
 
 Respond and reason in whatever language the user addressed you in. Each sub-skill follows the same
-rule on its own, so the whole pipeline speaks the user's language consistently — there is nothing
-to pass along.
+rule on its own, so the whole pipeline speaks the user's language consistently.
+
+## Two setup choices (ask once, up front)
+
+Before step 1, settle two settings and persist them to `docs/project-spec/.spec-config.md` so
+every sub-skill inherits them. Use one `AskUserQuestion` (defaults pre-selected). Full rules:
+**`../_shared/spec-pipeline/pipeline-config.md`**.
+
+1. **`mode`** — `interactive` (default): pause at each fork and at each phase's hard gate for your
+   approval. `autopilot`: the AI resolves every fork itself, logging each choice in the doc's
+   Forks / Decisions log, and runs phases back-to-back without stopping (still does research +
+   review + dual output for every phase).
+2. **`final_summary`** — `true` (default): at the end, build one combined human-readable
+   `docs/project-spec/summary.md`. `false`: skip it.
+
+Write the file (create `docs/project-spec/` if needed):
+
+```
+# Spec pipeline config
+
+- mode: <interactive | autopilot>
+- final_summary: <true | false>
+```
 
 ## Procedure
 
 ```
-- [ ] Step 0: Detect progress — which docs/project-spec/ artifacts already exist
-- [ ] Step 1: validate-idea   → approve gate
-- [ ] Step 2: define-product-requirements  → approve gate
-- [ ] Step 3: create-user-flows → approve gate
-- [ ] Step 4: design-architecture → approve gate
-- [ ] Done: summarize the documentation set
+- [ ] Step 0: Detect progress + settle the two settings → write .spec-config.md
+- [ ] Step 1: validate-idea                  → gate (interactive) / auto-advance (autopilot)
+- [ ] Step 2: define-product-requirements     → gate / auto-advance
+- [ ] Step 3: create-user-flows               → gate / auto-advance
+- [ ] Step 4: design-architecture             → gate / auto-advance
+- [ ] Step 5: design-dev-architecture         → gate / auto-advance
+- [ ] Done: build summary.md (if final_summary) + summarize the documentation set
 ```
 
-### Step 0: Detect progress and pick the start point
-List `docs/project-spec/` and see which artifacts already exist. If some are present, tell the user and
-propose resuming from the first missing step. Honor an explicit `--from <step>` argument
-(e.g. `--from define-product-requirements`) to start mid-pipeline. Never silently redo a completed step —
-ask before overwriting an existing artifact.
+### Step 0: Detect progress, settle settings
+List `docs/project-spec/`. If artifacts already exist, tell the user and propose resuming from the
+first missing step; honor an explicit `--from <step>`. Never silently redo a completed step — ask
+before overwriting. Then settle the two settings and write `.spec-config.md` (above). If it
+already exists, reuse it unless the user asks to change mode.
 
-### Steps 1–4: Run each sub-skill, then gate
+### Steps 1–5: Run each sub-skill, then advance
 For each step in order:
 
 1. **Announce** the step and the sub-skill you are about to invoke.
-2. **Invoke the sub-skill** via the Skill tool. Let it run its own procedure to completion (it
-   writes its artifact and stops at its own hard gate).
-3. **Offer a review** — ask whether to run `review-doc` against the new artifact before approval.
-4. **Hard gate.** Present the artifact path and STOP for explicit user approval:
-   > "Step N (<sub-skill>) finished → <artifact>. Approve to continue to step N+1, or tell me
-   > what to change."
-   Do NOT auto-advance. If the user requests changes, loop back into that step's sub-skill
-   before moving on.
+2. **Invoke the sub-skill** via the Skill tool. It reads `.spec-config.md`, runs its internal
+   pipeline to completion (research, draft, review → `*.review.md`, merge → applies the review and
+   **deletes** it, and the dual output: detailed `*.research.md` + human `*.summary.md`), and
+   stops at its own gate per the mode.
+3. **Advance by mode:**
+   - **interactive — Hard gate.** Present the two artifact paths and STOP for explicit approval:
+     > "Step N (<sub-skill>) finished → <noun>.research.md (detail), <noun>.summary.md (for you).
+     > Approve to continue to step N+1, or tell me what to change."
+     Do NOT auto-advance. On change requests, loop back into that step's sub-skill.
+   - **autopilot — Auto-advance.** Do not stop. Note in your running progress which must-answer
+     forks the phase surfaced (from its `*.summary.md`), and continue to the next step.
 
-A sub-skill not yet available in this collection is a stop condition: report it and let the user
-decide whether to skip the step or build the skill first.
+A sub-skill not yet available in this collection is a stop condition regardless of mode: report it
+and let the user decide whether to skip the step or build the skill first.
 
-### Done
-When the last approved step completes, summarize the full documentation set (paths + one-line
-status each) and hand off: the project is ready for implementation planning.
+### Done: final summary + handoff
+When the last available step completes:
+
+1. **If `final_summary: true`,** build `docs/project-spec/summary.md` — one human-readable
+   document combining each phase's `*.summary.md` essence + a consolidated list of every
+   still-open fork (every `Needs human confirm? = yes`) across all phases + consolidated open
+   risks. Do not re-derive — concatenate and roll up. Format:
+   **`../_shared/spec-pipeline/output-format.md`** (section 4).
+2. **Summarize the documentation set** (paths + one-line status each) and hand off: the project is
+   ready for implementation. In autopilot, point the user at `summary.md` first and list the
+   must-answer forks they still own.
 
 ## Rules
 
-1. **Conduct, don't duplicate.** Never re-implement a phase's questions or template — invoke its
-   sub-skill. This keeps each phase's logic in one place.
-2. **Respect every hard gate.** One user approval per step; never chain two steps without it.
+1. **Conduct, don't duplicate.** Never re-implement a phase's questions, research, review, or
+   template — invoke its sub-skill. Each phase owns its own research + review.
+2. **Respect the mode.** interactive: one approval per step, never chain two without it.
+   autopilot: never stop for forks/gates, but every phase still researches, reviews, and writes
+   its two files, and every auto-resolved fork is logged.
 3. **Resume, don't restart.** Reuse existing artifacts; only redo a step on explicit request.
+4. **Settings are set once and shared.** Write `.spec-config.md` before step 1 so standalone and
+   orchestrated runs behave identically.

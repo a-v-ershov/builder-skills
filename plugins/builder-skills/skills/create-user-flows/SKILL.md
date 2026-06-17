@@ -1,6 +1,6 @@
 ---
 name: create-user-flows
-description: "Map how users actually move through the product to get value — the customer journey and the step-by-step flows for each feature. Use after define-product-requirements (reads docs/project-spec/product-requirements.md) and before design-architecture. Writes docs/project-spec/user-flows.md. The second product-layer step: it describes the experience (WHAT the user does), never the technical HOW and never visual UI design."
+description: "Map how users actually move through the product to get value — the customer journey and the step-by-step flows for each feature, informed by conventional patterns for the category and an adversarial review pass. Use after define-product-requirements (reads docs/project-spec/product-requirements.research.md) and before design-architecture. Writes a detailed, source-cited docs/project-spec/user-flows.research.md plus a short human summary; an internal reviewer pass checks the draft and is merged in, then removed. The second product-layer step: it describes the experience (WHAT the user does), never the technical HOW and never visual UI design."
 ---
 
 # Create User Flows Skill
@@ -16,15 +16,33 @@ Scope discipline (read carefully):
   steps, decision points, and screen *states* — not pixels.
 - **Still the product layer: WHAT the user does, never HOW it is built.** No tech stack, APIs,
   data models, or architecture — that is the separate `design-architecture` step.
-- **Inherit, don't redefine.** Features and personas come from
-  `docs/project-spec/product-requirements.md`. Every flow traces back to a feature there.
+- **Inherit, don't redefine.** Features and personas come from `product-requirements.research.md`.
+  Every flow traces back to a feature there.
 
-The only output of this skill is `docs/project-spec/user-flows.md`.
+## Outputs in `docs/project-spec/` (two kept files)
+
+- **`user-flows.research.md`** — the detailed, source-cited flows (for the AI/next phases).
+- **`user-flows.summary.md`** — the short human summary (essence + forks to answer).
+
+Plus a transient **`user-flows.review.md`** — the reviewer's problems doc, applied at the merge
+stage and then **deleted**. It is a working artifact, never a deliverable.
 
 ## Language
 
 Respond and reason in whatever language the user addressed you in — ask your questions and write
-the flows doc in that language, and think in it too. This never translates code or identifiers.
+the docs in that language, and think in it too. Instruct every subagent you spawn to do the
+same. This never translates code or identifiers.
+
+## Modes (read this first)
+
+Read `docs/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`) and
+`final_summary`. If absent (standalone run), ask the user both settings once (default
+**interactive** + **final_summary: true**) and write the file. Full rules:
+**`../_shared/spec-pipeline/pipeline-config.md`**.
+
+- **interactive** — ask at each fork; stop at the conflict gate and the hard gate.
+- **autopilot** — choose the flow shape yourself and log every fork; resolve 🔴 review findings
+  yourself; do not prompt or stop. Stay opinionated — autopilot still simplifies convoluted paths.
 
 ## Operating principles (non-negotiable)
 
@@ -32,7 +50,10 @@ the flows doc in that language, and think in it too. This never translates code 
   they come from, what do they see, what do they decide, where do they go next.
 - **Always ask "what else can happen here?"** Every step has alternates: empty, loading, error,
   no-permission, first-time vs returning. The happy path alone is incomplete.
-- **Every flow traces to a feature.** A flow that needs something not in product-requirements.md
+- **Borrow proven patterns, with a source.** Conventional flows for this category (onboarding,
+  auth, checkout, sharing) are a research question (stage 2) — cite the pattern you adopt rather
+  than inventing a novel flow where a known one fits.
+- **Every flow traces to a feature.** A flow needing something not in `product-requirements.research.md`
   is a gap — surface it. A feature with no flow is a gap too.
 - **Take a position.** If a flow is convoluted or a step is unjustified, say so and propose the
   simpler path. No hedging.
@@ -40,61 +61,98 @@ the flows doc in that language, and think in it too. This never translates code 
 ## Procedure (copy this checklist into your response and check off as you go)
 
 ```
-- [ ] Step 1: Load product-requirements.md; list features, personas, jobs-to-be-done
-- [ ] Step 2: Customer journey map for the primary persona
-- [ ] Step 3: Key user flows — one per main feature / job, with branches
-- [ ] Step 4: States & edge cases per flow (empty / loading / error / success / auth)
-- [ ] Step 5: Coverage check — every feature has a flow, every flow's needs exist
-- [ ] Step 6: Write docs/project-spec/user-flows.md and STOP at the gate
+- [ ] Stage 0: Intake — load product-requirements.research.md; list features, personas, JTBD; read mode
+- [ ] Stage 1: Elicit — journey map + key flows + states/edge cases (interactive: ask · autopilot: self-answer + log forks)
+- [ ] Stage 2: Research — conventional flows / onboarding & auth patterns for the category (adaptive)
+- [ ] Stage 3: Draft — draft user-flows.research.md
+- [ ] Stage 4: Review — spawn reviewer → user-flows.review.md (intermediate)
+- [ ] Stage 5: Conflict gate — handle 🔴 findings (interactive: stop · autopilot: self-resolve + log)
+- [ ] Stage 6: Merge — synthesize the final user-flows.research.md, then delete the review doc
+- [ ] Stage 7: Dual output — user-flows.research.md (Sources + Forks log) + user-flows.summary.md
+- [ ] Stage 8: Hard gate — interactive: stop for approval · autopilot: log auto-pass, hand off
 ```
 
-### Step 1: Inherit and orient
-Read `docs/project-spec/product-requirements.md`. List the features, the primary/secondary
-personas, and the jobs-to-be-done. If the file is missing, tell the user and offer to run
-`/define-product-requirements` first. Do not invent features here.
+### Stage 0: Intake
+Read `docs/project-spec/product-requirements.research.md`. List the features, primary/secondary
+personas, and jobs-to-be-done. If it is missing, tell the user and offer to run
+`/define-product-requirements` first. Do not invent features here. Read the mode.
 
-### Step 2: Customer journey map
-For the primary persona, map the end-to-end journey across stages — typically: **discover →
-onboard → first value ("aha") → habitual use → return / expand**. For each stage capture: the
-user's goal, what they do, the touchpoint, and the friction or emotion. This is the macro view
-before the detailed flows.
+### Stage 1: Elicitation
+Build the flows across three layers:
+1. **Customer journey map** for the primary persona — across stages (discover → onboard → first
+   value "aha" → habitual use → return/expand). Per stage: user goal, what they do, the
+   touchpoint, the friction/emotion.
+2. **Key user flows** — one per main feature / job-to-be-done: entry point; numbered steps (user
+   actions + what they see, as state not visual design); decision/branch points and where each
+   leads; success outcome; traceability to the feature(s). Cover important alternate/error paths.
+3. **States & edge cases** — per key step/screen: empty/first-time, loading, error/retry, success,
+   permission/auth (signed-out, no access), and how the user recovers from each.
 
-### Step 3: Key user flows
-For each main feature / job-to-be-done, write a step-by-step flow:
-- **Entry point** — where the user comes from / what triggers the flow.
-- **Steps** — numbered, in the user's actions and what they see (state, not visual design).
-- **Decision / branch points** — and where each branch leads.
-- **Success outcome** — what "done" looks like.
-- **Traceability** — the feature(s) from product-requirements.md this flow serves.
-Cover the important **alternate and error paths**, not just the happy path.
+- **interactive:** ask at each fork (e.g. "guest checkout or require sign-in first?").
+- **autopilot:** choose the flow shape from the requirements + (stage 2) patterns + best
+  judgment; record each branch decision in the Forks / Decisions log with rationale, confidence,
+  source. Mark uncertain ones `Needs human confirm? = yes`.
 
-### Step 4: States & edge cases
-For the key steps/screens, enumerate the states the user can hit: empty / first-time, loading,
-error / retry, success, and permission/auth (signed-out, no access). Note how the user recovers
-from each non-happy state.
+### Stage 2: Research (adaptive)
+Verify experience conventions. Topics: the conventional flow for each category-standard journey
+(onboarding, auth/SSO, checkout/payment, sharing/collaboration, empty states); known UX pitfalls
+to avoid. Default to light targeted web search; escalate to `/deep-research` only on request or
+for an unusual domain. Method — **`../_shared/spec-pipeline/research-method.md`**. Carry the
+patterns + source links into the draft.
 
-### Step 5: Coverage check (feedback loop)
-Cross-check both directions:
-- Every feature in product-requirements.md appears in at least one flow.
-- Every flow's needs map to existing features.
-Flag any gap. If a flow needs a capability not in the requirements, STOP and recommend updating
-`docs/project-spec/product-requirements.md` (re-run `/define-product-requirements`) before
-finalizing — do not silently add features here.
+### Stage 3: Draft
+Draft `docs/project-spec/user-flows.research.md` from `references/user-flows-template.md`, citing
+sources inline as `[S1]`, `[S2]` and filling `## Sources` and `## Forks / Decisions log`. Run the
+coverage check (every feature has a flow; every flow's needs exist). Create `docs/project-spec/`
+if needed.
 
-### Step 6: Write the artifact and gate
-Write `docs/project-spec/user-flows.md` using `references/user-flows-template.md`. Create the
-`docs/project-spec/` directory if needed. Then **STOP** — this is a hard gate:
+### Stage 4: Review
+Spawn a separate reviewer subagent to find inconsistencies + gaps and write
+`docs/project-spec/user-flows.review.md` (it does NOT edit the draft; this file is intermediate).
+Method + format: **`../_shared/spec-pipeline/review-method.md`** and `review-template.md`. For
+this phase the reviewer especially probes: a flow needing a capability not in the requirements; a
+feature with no flow; missing error/empty/auth states; a convoluted path where a proven simpler
+one exists; a branch resolved without justification.
 
-> "User flows written to docs/project-spec/user-flows.md. Review it. When you approve, run
-> `/design-architecture` for the technical layer. I will not proceed automatically."
+### Stage 5: Conflict gate
+If the review found 🔴 critical findings:
+- **interactive:** STOP. Show the count + top items and get the user's decisions. If a flow needs
+  a capability not in `product-requirements.research.md`, recommend updating it (re-run
+  `/define-product-requirements`) rather than silently adding a feature here.
+- **autopilot:** resolve them yourself (simplify the path, add the missing states, targeted
+  re-research) and log each resolution. A flow that needs a missing feature is logged as a fork
+  recommending a product-requirements update, not silently invented.
+Clean review (0 🔴) proceeds without stopping.
 
-Do NOT start architecture or any technical work in this session unless the user explicitly
-approves and asks.
+### Stage 6: Merge
+Synthesize draft + review corrections + filled gaps into the final `user-flows.research.md`. Apply
+fixes, add the missing states/paths the reviewer found, log the applied findings in the Forks /
+Decisions log, re-research **only** still-disputed conventions. What no one could verify goes to
+`## Open questions`. **Then delete `docs/project-spec/user-flows.review.md`** — its content now
+lives in the research doc.
+
+### Stage 7: Dual output
+Finalize `user-flows.research.md` (complete `## Sources` and `## Forks / Decisions log`). Then
+write `docs/project-spec/user-flows.summary.md` from
+**`../_shared/spec-pipeline/summary-template.md`** — essence + the forks the human must answer +
+open risks. Format rules: **`../_shared/spec-pipeline/output-format.md`**.
+
+### Stage 8: Hard gate
+- **interactive:** STOP — this is a hard gate:
+  > "User flows done → user-flows.research.md (detail), user-flows.summary.md (for you). Review
+  > it. When you approve, run `/design-architecture` for the technical layer. I will not proceed
+  > automatically."
+- **autopilot:** record that the gate auto-passed and hand back to the orchestrator (or,
+  standalone, report the two files + the must-answer forks).
+
+Do NOT start architecture or any technical work in this session unless the user explicitly approves.
 
 ## Rules
 
-1. Never produce the flows doc after the first message — load the requirements and work through
-   the steps first.
+1. Never produce the flows doc after the first message — load the requirements and work the
+   stages first.
 2. Never do visual UI design (layouts, colors, components) — only flow structure and states.
 3. Never make technical/architecture decisions — that is the next step.
-4. Never add features here — surface gaps back to product-requirements.md instead.
+4. Never add features here — surface gaps back to product-requirements.research.md instead.
+5. Every adopted pattern is cited; every fork is logged; the review always runs (both modes), is
+   merged in, and the review file is then deleted.

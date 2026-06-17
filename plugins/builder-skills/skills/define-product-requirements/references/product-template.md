@@ -1,7 +1,7 @@
 # Product Definition — <Product name>
 
 > Status: Draft | Date: <YYYY-MM-DD>
-> Source: docs/project-spec/idea-validation.md (<verdict>)
+> Source: docs/project-spec/idea-validation.research.md (<verdict>)
 
 ## Summary
 
@@ -54,6 +54,22 @@ validated idea.>
 ## Non-goals (scope boundaries)
 
 - <What this product deliberately does NOT try to be. Not a deferred-feature list.>
+
+## Sources
+
+<Every source consulted during research (comparable products, table-stakes features, category
+norms), referenced inline above as [S1], [S2], … See _shared/spec-pipeline/output-format.md.>
+
+- [S1] <title> — <url>
+- [S2] <claim> — no reliable source found
+
+## Forks / Decisions log
+
+<Every decision point this phase hit and who resolved it. Required in both modes.>
+
+| # | Fork (the open question) | Options considered | Decision | By | Rationale | Confidence | Source | Needs human confirm? |
+|---|--------------------------|--------------------|----------|----|-----------|-----------|--------|----------------------|
+| 1 | <question> | A / B / C | <chosen> | AI \| human | <why> | high\|med\|low | [S2] or — | yes \| no |
 
 ## Open questions
 

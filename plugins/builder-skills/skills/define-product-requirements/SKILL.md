@@ -1,6 +1,6 @@
 ---
 name: define-product-requirements
-description: "Turn a validated idea into the product definition: who it is for, and the full set of features being built. Use after validate-idea (reads docs/project-spec/idea-validation.md) and before create-user-flows and design-architecture. Writes docs/project-spec/product-requirements.md. Defines the product layer (WHAT and for WHOM) — never the technical HOW, which is the separate design-architecture step."
+description: "Turn a validated idea into the product definition: who it is for, and the full set of features being built — backed by real-world research (comparable products, table-stakes features) and an adversarial review pass. Use after validate-idea (reads docs/project-spec/idea-validation.research.md) and before create-user-flows and design-architecture. Writes a detailed, source-cited docs/project-spec/product-requirements.research.md plus a short human summary; an internal reviewer pass checks the draft and is merged in, then removed. Defines the product layer (WHAT and for WHOM) — never the technical HOW, which is the separate design-architecture step."
 ---
 
 # Define Product Requirements Skill
@@ -13,92 +13,144 @@ spec to work from.
 Scope discipline (read carefully):
 
 - **This is the product layer: WHAT and for WHOM, never HOW.** No tech stack, no APIs, no data
-  models, no architecture. Those belong to the separate `design-architecture` step (the second
-  file).
+  models, no architecture. Those belong to the separate `design-architecture` step.
 - **No feature prioritization.** The feature list is the committed scope — everything in it gets
-  built. There are no must/should/could tiers, no "MVP cut line", no deferred-feature backlog.
-  If a feature does not belong in the product, remove it; do not park it.
+  built. No must/should/could tiers, no "MVP cut line", no deferred-feature backlog. If a feature
+  does not belong in the product, remove it; do not park it.
 - **Defer user flows to `create-user-flows`** and technical decisions to `design-architecture`.
-  Keep this doc to features, audience, success, and product constraints.
 
-The only output of this skill is `docs/project-spec/product-requirements.md`.
+## Outputs in `docs/project-spec/` (two kept files)
+
+- **`product-requirements.research.md`** — the detailed, source-cited product definition (for the AI/next phases).
+- **`product-requirements.summary.md`** — the short human summary (essence + forks to answer).
+
+Plus a transient **`product-requirements.review.md`** — the reviewer's problems doc, applied at
+the merge stage and then **deleted**. It is a working artifact, never a deliverable.
 
 ## Language
 
 Respond and reason in whatever language the user addressed you in — ask your questions and write
-the product doc in that language, and think in it too. This never translates code or identifiers.
+the docs in that language, and think in it too. Instruct every subagent you spawn to do the
+same. This never translates code or identifiers.
+
+## Modes (read this first)
+
+Read `docs/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`) and
+`final_summary`. If absent (standalone run), ask the user both settings once (default
+**interactive** + **final_summary: true**) and write the file. Full rules:
+**`../_shared/spec-pipeline/pipeline-config.md`**.
+
+- **interactive** — ask the elicitation questions; stop at the conflict gate and the hard gate.
+- **autopilot** — answer them yourself and log every fork; resolve 🔴 review findings yourself; do
+  not prompt or stop. Stay opinionated — autopilot still cuts features that earn no place.
 
 ## Operating principles (non-negotiable)
 
-- **Inherit, don't repeat.** Read `docs/project-spec/idea-validation.md` first and treat its audience,
+- **Inherit, don't repeat.** Read `idea-validation.research.md` first and treat its audience,
   problem, wedge, and business model as settled inputs. Only revisit them to fill genuine gaps.
-- **Every feature traces to a validated need.** Each feature must map to a problem or audience
-  need from the validation doc. A feature that traces to nothing is cut, not kept.
+- **Every feature traces to a validated need.** Each feature maps to a problem or audience need
+  from the validation doc. A feature that traces to nothing is cut, not kept.
+- **Compare against the real category.** What's table-stakes, what's differentiating, and what
+  comparable products ship are research questions (stage 2) — verify and cite, don't guess.
 - **Measurable or it doesn't count.** Each success metric needs a signal, a target, and a way to
   measure it. Reject "improve UX", "increase engagement" without numbers.
-- **Take a position.** When the user proposes a feature that doesn't earn its place, say so and
-  why. No hedging.
+- **Take a position.** When a proposed feature doesn't earn its place, say so and why. No hedging.
 
 ## Procedure (copy this checklist into your response and check off as you go)
 
 ```
-- [ ] Step 1: Load docs/project-spec/idea-validation.md; summarize settled inputs; flag gaps
-- [ ] Step 2: Audience — primary persona(s), segments, jobs-to-be-done
-- [ ] Step 3: Features — the full committed set, each traced to a need
-- [ ] Step 4: Success metrics — signal + target + how measured
-- [ ] Step 5: Product constraints & non-goals
-- [ ] Step 6: Write docs/project-spec/product-requirements.md and STOP at the gate
+- [ ] Stage 0: Intake — load idea-validation.research.md; summarize settled inputs; flag gaps; read mode
+- [ ] Stage 1: Elicit — audience, features, metrics, constraints (interactive: ask · autopilot: self-answer + log forks)
+- [ ] Stage 2: Research — comparable feature sets / table-stakes / category norms (adaptive)
+- [ ] Stage 3: Draft — draft product-requirements.research.md
+- [ ] Stage 4: Review — spawn reviewer → product-requirements.review.md (intermediate)
+- [ ] Stage 5: Conflict gate — handle 🔴 findings (interactive: stop · autopilot: self-resolve + log)
+- [ ] Stage 6: Merge — synthesize the final product-requirements.research.md, then delete the review doc
+- [ ] Stage 7: Dual output — product-requirements.research.md (Sources + Forks log) + product-requirements.summary.md
+- [ ] Stage 8: Hard gate — interactive: stop for approval · autopilot: log auto-pass, hand off
 ```
 
-### Step 1: Inherit and gap-check
-Read `docs/project-spec/idea-validation.md`. Summarize back what is already settled (audience beachhead,
-problem, wedge, business model, verdict). List the gaps this product definition must close. If
-the validation doc is missing, tell the user and offer to run `/validate-idea` first, or to
-capture a short validation summary inline before continuing.
+### Stage 0: Intake
+Read `docs/project-spec/idea-validation.research.md`. Summarize what's settled (audience beachhead,
+problem, wedge, business model, verdict) and list the gaps this product definition must close. If
+it is missing, tell the user and offer to run `/validate-idea` first, or capture a short
+validation summary inline. Read the mode.
 
-### Step 2: Audience
-Expand the validated beachhead into the product's audience:
-- **Primary persona** — role, context, the job they are hiring this product to do.
-- **Segments** — primary vs secondary audiences, and who is explicitly NOT the audience.
-- **Jobs-to-be-done** — the core jobs, in the user's words.
+### Stage 1: Elicitation
+Work the product definition across four dimensions:
+1. **Audience** — primary persona (role, context, the job they hire this product to do);
+   segments (primary / secondary / explicitly-not); jobs-to-be-done in the user's words.
+2. **Features (committed scope)** — the full set being built. For each: short name + one-line
+   capability + the validated need it serves (traceability). Group by capability area. Do NOT
+   rank, tier, or defer. Challenge anything that traces to nothing — fold it in properly or drop it.
+3. **Success metrics** — per goal: signal, target (a number), how measured. Tie to the business
+   model where relevant.
+4. **Product constraints & non-goals** — budget/timeline/team, platforms/devices, compliance,
+   hard non-negotiables, key assumptions; non-goals as scope boundaries (not deferred features).
+   Note raw technical expectations (e.g. "must feel instant") to carry forward — do not decide
+   architecture here.
 
-### Step 3: Features (the committed scope)
-Define the **full set of features being built** — this is the scope, all in. For each feature:
-- A short name and one-line description of the capability.
-- The validated need/problem it serves (traceability). Cut anything that traces to nothing.
-- Group features by capability area for readability.
+- **interactive:** ask, one dimension at a time; challenge weak features in prose.
+- **autopilot:** answer each from the validation doc + (stage 2) research + best judgment; record
+  every choice in the Forks / Decisions log (especially each feature in-or-out decision) with
+  rationale, confidence, source. Mark uncertain ones `Needs human confirm? = yes`.
 
-Do NOT rank, tier, or defer. If the user lists a feature that doesn't fit the product, challenge
-it and either fold it in properly or drop it.
+### Stage 2: Research (adaptive)
+Verify category reality. Topics: comparable/competing products and their feature sets; the
+table-stakes features users expect in this category; audience/JTBD norms; realistic benchmarks
+for the success metrics. Default to light targeted web search; escalate to `/deep-research` only
+for a broad landscape or on request. Method — **`../_shared/spec-pipeline/research-method.md`**.
+Carry findings + source links into the draft; a "table-stakes" claim must cite where it's seen.
 
-### Step 4: Success metrics
-For each product goal, define: the **signal** (what we observe), the **target** (the number),
-and **how it is measured**. Tie metrics back to the business model where relevant.
+### Stage 3: Draft
+Draft `docs/project-spec/product-requirements.research.md` from `references/product-template.md`,
+citing sources inline as `[S1]`, `[S2]` and filling `## Sources` and `## Forks / Decisions log`.
+Create `docs/project-spec/` if needed.
 
-### Step 5: Product constraints & non-goals
-Capture product- and business-level constraints only:
-- Budget, timeline, team, platforms/devices to support, compliance/legal, hard non-negotiables,
-  and key assumptions.
-- **Non-goals** = scope boundaries ("this product does not try to be X"), NOT deferred features.
+### Stage 4: Review
+Spawn a separate reviewer subagent to find inconsistencies + gaps and write
+`docs/project-spec/product-requirements.review.md` (it does NOT edit the draft; this file is
+intermediate). Method + format: **`../_shared/spec-pipeline/review-method.md`** and
+`review-template.md`. For this phase the reviewer especially probes: features that trace to no
+validated need; missing table-stakes the research surfaced; metrics that aren't measurable; an
+audience too vague to act on; scope creep past the validated wedge.
 
-Do NOT capture technical constraints as architecture decisions here. Performance, security,
-scale, and reliability targets are recorded in the `design-architecture` step as quality-attribute
-scenarios — note them as raw expectations if the user raises them, and carry them forward.
+### Stage 5: Conflict gate
+If the review found 🔴 critical findings:
+- **interactive:** STOP. Show the count + top items and get the user's decisions.
+- **autopilot:** resolve them yourself (cut/add features, tighten metrics, targeted re-research)
+  and log each resolution. A 🔴 you cannot resolve becomes an open question.
+Clean review (0 🔴) proceeds without stopping.
 
-### Step 6: Write the artifact and gate
-Write `docs/project-spec/product-requirements.md` using `references/product-template.md`. Then **STOP** — this is a hard
-gate:
+### Stage 6: Merge
+Synthesize draft + review corrections + filled gaps into the final
+`product-requirements.research.md`. Apply fixes, integrate missing table-stakes the reviewer
+justified, log the applied findings in the Forks / Decisions log, re-research **only**
+still-disputed points. What no one could verify goes to `## Open questions`. **Then delete
+`docs/project-spec/product-requirements.review.md`** — its content now lives in the research doc.
 
-> "Product definition written to docs/project-spec/product-requirements.md. Review it. When you approve, run
-> `/create-user-flows` to map the user flows. I will not proceed automatically."
+### Stage 7: Dual output
+Finalize `product-requirements.research.md` (complete `## Sources` and `## Forks / Decisions
+log`). Then write `docs/project-spec/product-requirements.summary.md` from
+**`../_shared/spec-pipeline/summary-template.md`** — essence + the forks the human must answer +
+open risks. Format rules: **`../_shared/spec-pipeline/output-format.md`**.
 
-Do NOT start user-flow or architecture work in this session unless the user explicitly approves
-and asks.
+### Stage 8: Hard gate
+- **interactive:** STOP — this is a hard gate:
+  > "Product definition done → product-requirements.research.md (detail),
+  > product-requirements.summary.md (for you). Review it. When you approve, run
+  > `/create-user-flows`. I will not proceed automatically."
+- **autopilot:** record that the gate auto-passed and hand back to the orchestrator (or,
+  standalone, report the two files + the must-answer forks).
+
+Do NOT start user-flow or architecture work in this session unless the user explicitly approves.
 
 ## Rules
 
-1. Never produce the product doc after the first message — load the validation doc and work
-   through the steps first.
+1. Never produce the product doc after the first message — load the validation doc and work the
+   stages first.
 2. Never include technical/architecture decisions (stack, APIs, schemas) — that is the next file.
 3. Never tier or defer features — the list is the full committed scope.
 4. Every feature traces to a validated need, or it is cut.
+5. Every category claim is cited; every fork is logged; the review always runs (both modes), is
+   merged in, and the review file is then deleted.

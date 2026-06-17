@@ -45,6 +45,22 @@ growth/sustainability model explicitly.>
 
 <One concrete action the user should take next — an action, not a strategy.>
 
+## Sources
+
+<Every source consulted during research, referenced inline above as [S1], [S2], … See
+_shared/spec-pipeline/output-format.md.>
+
+- [S1] <title> — <url>
+- [S2] <claim> — no reliable source found
+
+## Forks / Decisions log
+
+<Every decision point this phase hit and who resolved it. Required in both modes.>
+
+| # | Fork (the open question) | Options considered | Decision | By | Rationale | Confidence | Source | Needs human confirm? |
+|---|--------------------------|--------------------|----------|----|-----------|-----------|--------|----------------------|
+| 1 | <question> | A / B / C | <chosen> | AI \| human | <why> | high\|med\|low | [S2] or — | yes \| no |
+
 ## Open questions
 
 - <Unresolved question carried into the define-product-requirements step.>
