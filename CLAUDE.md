@@ -44,13 +44,17 @@ skills/<name>/SKILL.md                   # one directory per skill
 skills/<name>/references/*.md            # bundled templates/rubrics (progressive disclosure)
 skills/_shared/spec-pipeline/*.md        # shared methodology for the project-spec phases (no SKILL.md)
 skills/_shared/build-pipeline/*.md       # shared methodology for the build phase (no SKILL.md)
+skills/_shared/release-pipeline/*.md     # shared methodology for the release phase (no SKILL.md)
 skills/_shared/agent-guide.md            # shared: the project CLAUDE.md "project map" block (cross-cutting, no SKILL.md)
+agents/*.md                              # named subagent roles (spec-reviewer, spec-researcher, implementer, verifier)
+scripts/*.sh                             # hook helpers (e.g. guard-write-scope.sh, used by skill-scoped hooks)
 CLAUDE.md
 README.md
 ```
 
-- Skills live under `skills/` at the repo root. Component dirs (`skills/`, and later
-  `commands/`, `agents/`) sit at the **plugin root**, not inside `.claude-plugin/`.
+- Skills live under `skills/` and agents under `agents/` — component dirs sit at the **plugin
+  root**, not inside `.claude-plugin/`. `agents/` is **auto-discovered** (no `plugin.json` entry
+  needed; the validator rejects an explicit `agents` field).
 - `SKILL.md` = YAML frontmatter (`name` + `description`) + a thin procedure with a copyable
   checklist. Long templates go in `references/` and load on demand.
 - Marketplace plugin `source` must be a relative path starting with `./`. Because the plugin is
@@ -91,6 +95,46 @@ collections (gstack, BMAD-METHOD, Spec Kit, Pimzino spec-workflow):
   sequential checklist; long templates/rubrics live in `references/`.
 - **Persona + anti-sycophancy.** Validation and review skills adopt an explicit critical
   persona, take a position, and name failure patterns instead of hedging.
+
+## Agents and tool-access conventions
+
+The pipelines spawn **fresh, role-specific subagents**. The recurring roles are named **agents** under
+`agents/` (auto-discovered — no `plugin.json` entry), so an orchestrator targets a stable
+`subagent_type` instead of describing a generic subagent in prose:
+
+- **`spec-reviewer`** — the adversarial reviewer every spec phase's review stage delegates to (replaces
+  the old `general-purpose` reviewer). **`spec-researcher`** — the research stage's fact-gatherer
+  (replaces the old `general-purpose` researcher). Both are **self-contained**: they carry their own
+  method (taxonomy/severity; search rules/verification-by-fact-type) in their body, because a
+  plugin-shipped agent cannot reliably read the `_shared/*.md` method files at runtime. The shared docs
+  (`review-method.md`, `research-method.md`) keep the orchestration (delegate → merge → delete) and
+  point at the agent.
+- **`implementer`** / **`verifier`** — the build-loop roles `build-product` spawns. They are **thin
+  wrappers** that `skills:`-preload the heavy procedure skill (`implement-feature` / `verify-feature`)
+  and add only a tool profile; the procedure stays single-sourced in the skill. `implementer` carries
+  **no** persistent memory (the design is *fresh per task, discard after* — see `build-config.md`);
+  cross-round continuity comes from `build-product` keeping the same agent alive within a task.
+
+Two documented limits shape the above: a plugin agent **cannot** carry `hooks` / `mcpServers` /
+`permissionMode`, and an agent **cannot** `skills:`-preload a skill marked `disable-model-invocation`.
+
+**`disable-model-invocation: true`** is set on the side-effecting / outward-facing entry points so
+Claude does not auto-fire them from a cold chat: `commit`, `build-product`, `setup-dev-environment`,
+`propagate-changes`, `cut-release`, `release-product`. It is **not** set on `implement-feature` /
+`verify-feature` (they are preloaded by the build-loop agents) or on the read-only `audit-*` and the
+doc-only spec phases (those are legitimate intent-driven entry points).
+
+**Write-scope guard hooks** turn a prose invariant into a harness guarantee, scoped to the one skill —
+the hook is declared in the skill's frontmatter (not plugin-wide, so it fires only while that skill is
+active) and runs `scripts/guard-write-scope.sh` with an allow-list of path globs, exiting 2 (a blocking
+denial fed back to the agent) on any out-of-scope write:
+
+- `verify-feature` — may write **tests + `docs/build-plan/`** only, never the feature's code.
+- each `audit-*` — read-only re: product code: may write **`docs/**` + the backlog + temp** only.
+
+**`allowed-tools` is deliberately not used** — pre-approving tools would grant a skill standing access
+in every session it is active; we keep the user's permission prompts intact and rely on
+`disable-model-invocation` + the scoped guards instead.
 
 ## Development-process skill pipeline (project-spec phase)
 

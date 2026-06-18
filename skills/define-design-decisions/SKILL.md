@@ -139,7 +139,7 @@ section explicitly — each weighty decision paired with the quality-attribute s
 Create `docs/project-spec/` if needed.
 
 ### Stage 4: Review
-Spawn a separate reviewer subagent to find inconsistencies + gaps and write
+Delegate to the `spec-reviewer` agent to find inconsistencies + gaps and write
 `docs/project-spec/design-decisions.review.md` (it does NOT edit the draft; this file is
 intermediate). Method + format: **`../_shared/spec-pipeline/review-method.md`** and
 `review-template.md`. For this phase the reviewer especially probes: a design decision that

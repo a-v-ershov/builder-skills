@@ -42,14 +42,16 @@ files).
 
 ## Agent lifecycle
 
-`build-product` spawns the focused sub-skills as **subagents**, with a deliberate context policy:
+`build-product` spawns the build-loop roles as **subagents** — the **`implementer`** agent (it
+preloads `implement-feature`) and the **`verifier`** agent (it preloads `verify-feature`) — with a
+deliberate context policy:
 
-- **`implement-feature` — fresh per task, continuous within a task.** Spawn it as a fresh subagent
+- **`implementer` — fresh per task, continuous within a task.** Spawn it as a fresh subagent
   (clean context) when a task starts. Across the implement↔verify rounds of the *same* task, continue
   that *same* agent so it keeps the memory of what it already tried — do **not** re-spawn it per round
   (a fresh-per-round implementer re-derives the task each round and loses the loop's continuity). When
   the task finishes, discard it; the next task gets a new fresh agent. One task, one context.
-- **`verify-feature` — a separate agent from the implementer** (see `verification-method.md`). It may
+- **`verifier` — a separate agent from the implementer** (see `verification-method.md`). It may
   be re-spawned per round, since the tests it authors persist as committed files.
 
 This keeps the orchestrator's own context thin (just backlog state) and each task's reasoning isolated.

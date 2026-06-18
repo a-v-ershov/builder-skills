@@ -112,7 +112,9 @@ the one outward-facing step and always confirms.
 ## Conventions to respect
 
 - Skills are **verbs**; their outputs are **nouns** (`validate-idea` → `idea-validation`).
-- Orchestrators **conduct, they do not duplicate** — they invoke focused sub-skills via the Skill tool.
+- Orchestrators **conduct, they do not duplicate** — they invoke focused sub-skills via the Skill tool
+  and spawn the named **agents** (`agents/`: `spec-reviewer`, `spec-researcher`, `implementer`,
+  `verifier`) for the pipelines' subagent roles.
 - Shared methodology lives in `_shared/` (no `SKILL.md`): `spec-pipeline/`, `build-pipeline/`, and
   `release-pipeline/` hold the elicitation, research, review, output-format, backlog, quality-gate,
   propagation, audit, severity, and report methods; `agent-guide.md` defines the project-map block. Read

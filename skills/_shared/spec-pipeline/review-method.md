@@ -8,23 +8,15 @@ not in a kept file.
 
 ## How to run it
 
-Spawn a **second top-level subagent** (Agent tool, `general-purpose`), independent of the one that
-drafted. Give it the draft path and two jobs:
+**Delegate to the `spec-reviewer` agent** (Agent tool, `subagent_type: spec-reviewer`) — a fresh,
+independent reviewer that did not draft this. The agent carries the reviewer method: its two jobs
+(**refute** the draft's claims by opening their cited sources, not trusting them; **find + fill the
+gaps** it left), the verification-standard-by-fact-type from `research-method.md`, and the
+inconsistency taxonomy + severity below. Definition: `agents/spec-reviewer.md`.
 
-**(a) Refute.** Independently verify the draft's claims and find as many inconsistencies as
-possible — actively trying to *disprove*, not confirm. Do not trust the draft's own citations:
-open them (WebFetch) and check they actually say what is claimed. Targeted hand-checking against
-primary sources beats re-running a full deep research here. Follow the search rules and the
-verification-standard-by-fact-type in `research-method.md`.
-
-**(b) Find gaps.** Find what the draft did **not** answer: requirements of this phase left
-unaddressed, forks that were skipped, claims with no support, success criteria that aren't
-measurable. For each gap, do targeted research to **fill it** (a fact + primary-source link) or
-honestly record "no reliable data" — do not invent.
-
-The reviewer writes **`<artifact>.review.md`** using `review-template.md` and returns. It works
-synchronously and writes the file before exiting. (The merge stage deletes this file after
-applying it.)
+Hand it: the **draft path**, the **phase name**, and **this phase's specific probes**. It writes
+**`<artifact>.review.md`** (format: `review-template.md`) synchronously and returns the 🔴/🟡/⚪
+counts. It never edits the draft — the merge stage applies the file, then **deletes** it.
 
 ## Inconsistency types to hunt
 

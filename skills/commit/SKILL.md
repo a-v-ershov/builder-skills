@@ -1,5 +1,6 @@
 ---
 name: commit
+disable-model-invocation: true
 description: "Commit session changes with intelligent splitting for large changesets"
 argument-hint: "[--dry-run] [--single] [--all] [--message <msg>]"
 ---

@@ -2,6 +2,12 @@
 name: verify-feature
 description: "Independently verify that a built feature task actually meets its acceptance criteria. Use as the verification stage of the build loop — normally spawned by build-product as a separate, fresh agent so the verifier carries no bias from the implementer. Generic: it reads the project's run/drive/prove commands from docs/project-setup/verification.md and the task's own acceptance criteria, authors and runs adversarial automated tests for those criteria (committed — the regression net), drives the real running stack, and proves observable outcomes (a screenshot, a DB row, a log line, an asserted response) — never trusting 'it ran'. Writes only tests, never the feature's implementation. Appends a dated batch of findings to the task's ## Log, sets a pass/fail verdict, bumps verify_attempts, and at the max_verify_iterations cap escalates the task to needs_human instead of looping. Runs after implement-feature; can also be invoked standalone on a task id."
 argument-hint: "[task-id]"
+hooks:
+  PreToolUse:
+    - matcher: "Write|Edit"
+      hooks:
+        - type: command
+          command: "${CLAUDE_PLUGIN_ROOT}/scripts/guard-write-scope.sh '*/tests/*' '*/test/*' '*/__tests__/*' '*test*' '*spec*' '*/docs/build-plan/*' '/tmp/*' '/private/tmp/*' '/var/folders/*'"
 ---
 
 # Verify Feature Skill

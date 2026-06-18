@@ -1,5 +1,6 @@
 ---
 name: setup-dev-environment
+disable-model-invocation: true
 description: "Turn the dev-architecture spec into a real, runnable local environment. Use after the project-spec pipeline (reads docs/project-spec/dev-architecture.research.md and architecture.research.md + adr/*), as the first step of the build/development phase, to scaffold the repo and bring up the inner loop: install tooling, init the repo (.gitignore, project CLAUDE.md, settings.json), write the Docker Compose stack + seed data + one-command bring-up, and wire the AI tooling (MCP servers, plugins). Runs an internal plan → approve → execute: it plans everything but auto-executes only repo-local scaffolding; global installs, API keys, and Claude plugins run only with explicit confirmation. Idempotent (safe to re-run), detect-state-first. For an existing project (project_type: existing) it runs in adopt mode: it reads the reverse-engineered codebase-map, adopts and extends what's already there (compose, Makefile, existing lint/type tools wired behind make check) and fills only the gaps, never re-scaffolding. Ends with a smoke-test that proves the stack actually comes up, and writes docs/project-setup/verification.md (the concrete run/drive/prove commands the verify-feature skill later reads) plus a setup-log. The first build-phase skill; run before plan-development and build-product."
 ---
 

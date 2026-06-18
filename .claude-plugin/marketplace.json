@@ -6,13 +6,13 @@
   },
   "metadata": {
     "description": "Marketplace for coding-workflow skills for Claude Code.",
-    "version": "0.1.0"
+    "version": "0.1.1"
   },
   "plugins": [
     {
       "name": "builder-skills",
       "source": "./",
-      "description": "The create-project-spec pipeline (gather-context -> validate-idea -> define-product-requirements -> create-user-flows -> design-architecture) plus a commit skill. Each skill responds and thinks in whatever language you address it in."
+      "description": "Three coding-workflow pipelines (skills + agents) for Claude Code, from raw idea to cut release: project-spec (create-project-spec), build (build-product), and release (release-product) — plus commit and propagate-changes. Each skill responds and thinks in whatever language you address it in."
     }
   ]
 }

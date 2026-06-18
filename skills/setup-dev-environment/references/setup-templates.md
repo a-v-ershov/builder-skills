@@ -127,3 +127,36 @@ made executable. This is the project-specific input the generic `verify-feature`
 | `<fixture / sample gen>` | known inputs + intermediates | local sample data, no cloud | yes |
 | `<inspector / visualizer>` | see an intermediate outcome | local render, no prod assets | yes |
 ```
+
+## 4. `.claude/settings.json` — the quality-gate hook (copy-ready)
+
+The Claude Code **Stop hook** that runs the gate after the agent finishes editing and **feeds the
+failures back** so it fixes them before finishing — the in-session counterpart of the pre-commit hook.
+Drop this into the project's `.claude/settings.json` (merge it with any existing `hooks` block):
+
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "make check 1>&2 || { echo 'Quality gate (make check) is red — fix the reported issues before finishing.' 1>&2; exit 2; }",
+            "timeout": 300
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+- **Exit codes do the work.** `make check` green → exit 0, the agent stops normally; red → the wrapper
+  exits **2**, which blocks the stop and feeds the gate's own output back as the next thing to fix.
+- **Keep it actionable, keep it fast.** If the full suite is slow, point the Stop hook at a faster
+  subset (lint + type-check + changed-file tests) and let the **pre-commit hook** run the whole suite —
+  the commit is the hard gate (`_shared/build-pipeline/quality-gate.md`). Raise `timeout` (seconds) to
+  fit the gate's runtime.
+- It is the same gate `make check` runs everywhere; the hook changes only *when* it runs (on stop) and
+  *that a red result blocks* — never *what* it checks.

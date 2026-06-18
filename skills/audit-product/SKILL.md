@@ -2,6 +2,12 @@
 name: audit-product
 description: "Audit the built product end-to-end against the spec's user flows. Use in the release phase (run by release-product, or standalone) once features are built. A fresh, independent QA lead: it reads the user flows + their acceptance criteria from docs/project-spec/user-flows.research.md and drives the WHOLE running product through each journey — proving the cross-feature integration that per-task verify-feature could not see (state carried across steps, the seams between features, the flow's success outcome and its significant/error states). Read-only: it drives, observes, and ranks (blocker = a broken core journey, per the rubric) but NEVER edits product code — it files blockers/majors as rework tasks into the backlog and writes docs/release/qa-report.md. Brings the stack up through the coordinated entrypoint (env lease) so it doesn't collide with other audits. Re-runs after a fix to confirm the journey now completes."
 argument-hint: "[--reaudit]"
+hooks:
+  PreToolUse:
+    - matcher: "Write|Edit"
+      hooks:
+        - type: command
+          command: "${CLAUDE_PLUGIN_ROOT}/scripts/guard-write-scope.sh '*/docs/*' '*/docs/build-plan/*' '/tmp/*' '/private/tmp/*' '/var/folders/*'"
 ---
 
 # Audit Product Skill

@@ -119,7 +119,7 @@ sources inline as `[S1]`, `[S2]` and filling `## Sources` and `## Forks / Decisi
 containing `*.review.md` if absent).
 
 ### Stage 4: Review (accuracy + completeness critic)
-Spawn a separate reviewer subagent to write `docs/project-spec/codebase-map.review.md` (it does NOT
+Delegate to the `spec-reviewer` agent to write `docs/project-spec/codebase-map.review.md` (it does NOT
 edit the draft; this file is intermediate). Method + format:
 **`../_shared/spec-pipeline/review-method.md`** and `review-template.md`. For this phase the critic
 checks **two** things specific to a code map: **accuracy** (does a claimed entity/route actually

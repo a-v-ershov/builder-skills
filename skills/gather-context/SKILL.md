@@ -126,7 +126,7 @@ sources inline as `[S1]`, `[S2]` and filling `## Sources` and `## Forks / Decisi
 containing `*.review.md` if absent).
 
 ### Stage 4: Review (coverage critic)
-Spawn a separate reviewer subagent to write `docs/project-spec/project-brief.review.md` (it does NOT
+Delegate to the `spec-reviewer` agent to write `docs/project-spec/project-brief.review.md` (it does NOT
 edit the draft; this file is intermediate). Method + format:
 **`../_shared/spec-pipeline/review-method.md`** and `review-template.md`. For this phase the critic
 is a **completeness critic**, not an adversary: which of the eight dimensions is still thin or

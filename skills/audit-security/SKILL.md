@@ -2,6 +2,12 @@
 name: audit-security
 description: "Audit the built product for security at the system level, against the spec's threat model. Use in the release phase (run by release-product, or standalone) once features are built. A fresh, independent security engineer: it reads the STRIDE-lite threat model + trust boundaries from docs/project-spec/architecture.research.md and proves, with evidence, whether the running system upholds them — secrets in code/history, authn/authz on every protected path, injection (SQL/command/template/path), the lethal trifecta (private data + untrusted input + external exfiltration in one agent/tool path), insecure data handling (PII, crypto, logging), and dependency/supply-chain exposure. Read-only: it probes, reproduces, and ranks (blocker/major/minor per the rubric) but NEVER edits product code — it files blockers/majors as rework tasks into the backlog and writes docs/release/security-audit.md. Runs the shared audit machine; re-runs after a fix to confirm the hole is closed."
 argument-hint: "[--reaudit]"
+hooks:
+  PreToolUse:
+    - matcher: "Write|Edit"
+      hooks:
+        - type: command
+          command: "${CLAUDE_PLUGIN_ROOT}/scripts/guard-write-scope.sh '*/docs/*' '*/docs/build-plan/*' '/tmp/*' '/private/tmp/*' '/var/folders/*'"
 ---
 
 # Audit Security Skill

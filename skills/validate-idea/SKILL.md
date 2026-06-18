@@ -122,7 +122,7 @@ citing sources inline as `[S1]`, `[S2]` and filling the `## Sources` and `## For
 log` sections. Create `docs/project-spec/` if needed.
 
 ### Stage 4: Review
-Spawn a separate reviewer subagent to find inconsistencies + gaps and write
+Delegate to the `spec-reviewer` agent to find inconsistencies + gaps and write
 `docs/project-spec/idea-validation.review.md` (it does NOT edit the draft; this file is
 intermediate). Method + problems-doc format: **`../_shared/spec-pipeline/review-method.md`** and
 `review-template.md`. For this phase the reviewer especially probes: is the demand evidence real

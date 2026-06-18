@@ -1,5 +1,6 @@
 ---
 name: build-product
+disable-model-invocation: true
 description: "Build the product from the backlog, one task at a time. Use after plan-development, as the execution step of the build/development phase. A thin orchestrator: it reads docs/build-plan/, repeatedly picks one ready task (status todo with all blockers done), and drives it through the loop — implement-feature builds it, then verify-feature runs as a SEPARATE fresh agent (bounded by max_verify_iterations; at the cap the task escalates to needs_human), then a checkpoint commit carrying the task id — regenerating board.md and continuing until no ready task remains. Sequential, single working tree, no parallelism. Resumable: the backlog is the source of truth, so a killed run restarts without rebuilding done tasks. Conducts the focused sub-skills (setup-dev-environment / implement-feature / verify-feature / commit); it does not duplicate their logic."
 argument-hint: "[--task <id>] [--from <id>]"
 ---
@@ -7,7 +8,8 @@ argument-hint: "[--task <id>] [--from <id>]"
 # Build Product Skill (orchestrator)
 
 You are the conductor of the build loop. You do not write features or verify them yourself — you pick
-the next task and invoke the focused sub-skill for each step (via the Skill tool), then advance. Work
+the next task, then spawn the build-loop agents (`implementer` / `verifier`) and invoke the other
+sub-skills (`setup-dev-environment`, `commit`) for each step, then advance. Work
 is **sequential** on a single working tree on the current branch: one task at a time, no worktrees, no
 parallelism. The backlog is the source of truth, so you can be killed and resumed without losing work.
 
@@ -20,9 +22,10 @@ pick one ready task → implement-feature (fresh subagent + cheap gate) → veri
    → cap?   → set needs_human, surface it, move on to the next ready task
 ```
 
-Each sub-skill runs as a **subagent**: `implement-feature` is spawned **fresh per task** and kept for
-that task's rounds (so it remembers what it tried); `verify-feature` is a **separate** agent. Lifecycle
-rules: **`../_shared/build-pipeline/build-config.md`**.
+Each role runs as a **subagent**: the **`implementer`** agent (it preloads `implement-feature`) is
+spawned **fresh per task** and kept for that task's rounds (so it remembers what it tried); the
+**`verifier`** agent (it preloads `verify-feature`) is a **separate** agent. Lifecycle rules:
+**`../_shared/build-pipeline/build-config.md`**.
 
 ## Language
 
@@ -66,18 +69,19 @@ Repeat until no `ready` task remains:
 3. **Set `in_progress`** (history entry), **acquire the env lease** for this task (per
    **`../_shared/build-pipeline/env-access.md`** — its subagents inherit it), and **dispatch by `type`:**
    - **`setup`** → invoke `setup-dev-environment` (scoped to this task's work).
-   - **`feature`** → **spawn `implement-feature` as a fresh subagent** (clean context for this task),
-     then spawn **`verify-feature` as a separate agent** (no implementer bias). Run the **bounded
-     loop**: on a verify FAIL, hand the findings back to the **same** `implement-feature` agent (keep
-     its context — it remembers what it tried) and verify again; each round bumps `verify_attempts`. On
-     PASS, the task is done-eligible. When `verify_attempts` reaches `max_verify_iterations` with a
-     critical criterion still failing, set `status: needs_human`, surface it, and move on — do not loop
-     further. Lifecycle rules: **`../_shared/build-pipeline/build-config.md`**.
+   - **`feature`** → **spawn the `implementer` agent** (`subagent_type: implementer`, fresh per task,
+     clean context — it preloads `implement-feature`), then spawn the **`verifier` agent**
+     (`subagent_type: verifier`, a separate agent, no implementer bias — it preloads `verify-feature`).
+     Run the **bounded loop**: on a verify FAIL, hand the findings back to the **same** `implementer`
+     agent (keep its context — it remembers what it tried) and verify again; each round bumps
+     `verify_attempts`. On PASS, the task is done-eligible. When `verify_attempts` reaches
+     `max_verify_iterations` with a critical criterion still failing, set `status: needs_human`, surface
+     it, and move on — do not loop further. Lifecycle rules: **`../_shared/build-pipeline/build-config.md`**.
    - **`rework`** (a fix to already-built code, filed by a release-phase `audit-*` finding or a
-     `propagate-changes` reopen) → **same as `feature`**: spawn `implement-feature` fresh, then the
-     bounded `verify-feature` loop. (Re-confirmation that the audit's finding is closed is the
+     `propagate-changes` reopen) → **same as `feature`**: spawn the `implementer` agent fresh, then the
+     bounded `verifier` loop. (Re-confirmation that the audit's finding is closed is the
      release phase's `audit-*` re-run, not this loop.)
-   - **`verify`** (cross-cutting) → spawn `verify-feature` on it directly.
+   - **`verify`** (cross-cutting) → spawn the `verifier` agent on it directly.
 4. **On PASS → finalize the task:** first confirm the **full quality gate is green** (`make check` —
    lint/type + the whole accumulated test suite, **`../_shared/build-pipeline/quality-gate.md`**); a red
    gate routes back to the same `implement-feature` agent (it counts as a round) and is never committed
@@ -97,9 +101,8 @@ ids — the human's action list), and how many are blocked and by what. Point th
 
 ## Rules
 
-1. **Conduct, don't duplicate.** Never write or verify a feature yourself — spawn `implement-feature`
-   (fresh per task) and `verify-feature` (separate) as subagents, and invoke `setup-dev-environment`,
-   `commit`.
+1. **Conduct, don't duplicate.** Never write or verify a feature yourself — spawn the `implementer`
+   (fresh per task) and `verifier` (separate) agents, and invoke `setup-dev-environment`, `commit`.
 2. **One task at a time, in dependency order.** Pick a single `ready` task per iteration; never build
    on an unmet blocker.
 3. **Verify in a separate, fresh agent** — never let the implementer self-approve.

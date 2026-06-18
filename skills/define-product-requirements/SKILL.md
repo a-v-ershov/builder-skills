@@ -126,7 +126,7 @@ citing sources inline as `[S1]`, `[S2]` and filling `## Sources` and `## Forks /
 Create `docs/project-spec/` if needed.
 
 ### Stage 4: Review
-Spawn a separate reviewer subagent to find inconsistencies + gaps and write
+Delegate to the `spec-reviewer` agent to find inconsistencies + gaps and write
 `docs/project-spec/product-requirements.review.md` (it does NOT edit the draft; this file is
 intermediate). Method + format: **`../_shared/spec-pipeline/review-method.md`** and
 `review-template.md`. For this phase the reviewer especially probes: features that trace to no

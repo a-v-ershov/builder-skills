@@ -2,6 +2,12 @@
 name: audit-performance
 description: "Audit the built product's performance at the system level, against the spec's quality-attribute scenarios. Use in the release phase (run by release-product, or standalone) once features are built. A fresh, independent performance engineer: it reads the latency/throughput/cost/scale scenarios from docs/project-spec/architecture.research.md and MEASURES whether the running system meets them — p50/p95 on the hot paths, throughput under the target load, bundle/asset weight and client render cost, query plans (N+1, missing index), and the resource/cost envelope. Read-only: it measures, reproduces the slow path, and ranks (blocker = a missed budget, major = met with no margin, per the rubric) but NEVER edits product code — it files blockers/majors as rework tasks into the backlog and writes docs/release/performance-audit.md. Brings the stack up through the coordinated entrypoint (env lease) so it doesn't collide with other audits. Re-runs after a fix to confirm the number actually moved."
 argument-hint: "[--reaudit]"
+hooks:
+  PreToolUse:
+    - matcher: "Write|Edit"
+      hooks:
+        - type: command
+          command: "${CLAUDE_PLUGIN_ROOT}/scripts/guard-write-scope.sh '*/docs/*' '*/docs/build-plan/*' '/tmp/*' '/private/tmp/*' '/var/folders/*'"
 ---
 
 # Audit Performance Skill

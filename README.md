@@ -49,6 +49,11 @@ edit forward through the spec docs and into the backlog, surgically, asking only
 destructive changes. Everything under `docs/build-plan/` and `docs/project-setup/` is committed
 project documentation.
 
+Under the hood the pipelines spawn their fresh, role-specific subagents as **named agents** (in
+`agents/`) — including the build loop's `implementer` and `verifier`. The verifier carries a
+write-scope **hook**, so the harness (not just an instruction) stops it from editing the feature's
+code: it may write only tests.
+
 Throughout, the project's own root **`CLAUDE.md` carries a "project documentation map"** — a small
 marker-delimited block that indexes the spec, the backlog, and the setup contract and tells any
 coding agent the order to read them in before touching code. `create-project-spec` seeds it at the

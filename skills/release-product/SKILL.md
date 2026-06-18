@@ -1,5 +1,6 @@
 ---
 name: release-product
+disable-model-invocation: true
 description: "Take a built, verified product to a cut release. Use after build-product, as the release phase — the third pipeline, after the project-spec and build phases. A thin orchestrator: it reads the spec's quality-attribute contracts and runs the system-level audits (audit-security / audit-performance / audit-product / audit-code-health / audit-accessibility) as fresh, independent subagents in PARALLEL (they are read-only — they mutate nothing and collide on nothing), collects and ranks their findings by severity, files blockers/majors as rework tasks into the backlog (via plan-development's amend mode), drives a build-product run to fix them and re-audits — bounded by max_audit_iterations — until clean or escalated, then invokes cut-release (version + changelog + release notes + tag + commit + PR, always with confirmation, stopping before prod deploy). Audits never fix code; the cut is the only outward-facing step and always stops for the human. Resumable: the findings docs + backlog are the source of truth. Conducts the focused sub-skills; it does not duplicate their logic."
 argument-hint: "[--audit <name>] [--skip-ship]"
 ---

@@ -1,5 +1,6 @@
 ---
 name: cut-release
+disable-model-invocation: true
 description: "Cut a release: update the docs, bump the version if needed, write the changelog / release notes, and tag + commit + open the PR — in one gated step. Use as the final step of the release phase (run by release-product once the audits are clean, or standalone). A release engineer + tech writer: it FIRST checks the preconditions (clean working tree, no open 🔴 blocker from the audits), then refreshes the human-facing docs (README, the project documentation map, release notes), proposes the version bump (semver — proposed and confirmed, NEVER decided silently), updates the changelog from the work since the last release, and via the commit skill commits, tags, and opens the PR. Always confirms before acting, in BOTH modes (the careful pattern), and STOPS before any production deploy (deploy + post-deploy canary are out of scope by design). Never edits product code. The only outward-facing step of the release phase."
 argument-hint: "[--version <x.y.z>] [--no-pr]"
 ---

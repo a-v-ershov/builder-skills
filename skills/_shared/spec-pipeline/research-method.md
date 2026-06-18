@@ -17,17 +17,18 @@ phase skill. The persona-specific *topics* to research live in each skill; the *
 
 ## How to run it
 
-Spawn a **top-level subagent** (Agent tool, `general-purpose`) for the research, so the searching
-and link-reading stay out of the main context. In the subagent prompt:
+**Delegate to the `spec-researcher` agent** (Agent tool, `subagent_type: spec-researcher`), so the
+searching and link-reading stay out of the phase's main context. The agent carries this method — the
+adaptive depth above, the search rules and verification-standard below, and the return format.
+Definition: `agents/spec-researcher.md`. In the spawn prompt, give it **this phase's open factual
+questions**:
 
-- **Work synchronously and return findings before exiting.** Do NOT spawn background sub-agents
-  and do NOT return until the findings (or "no reliable data") are in hand — otherwise the result
-  is lost.
-- If `/deep-research` is available and runs non-interactively, phrase the phase's open factual
-  questions as a research question and use it. Otherwise search manually by the rules below.
-- Return findings **grouped by topic**: each topic gets a one-line description + a
-  **primary-source link**. Mark anything unverifiable as "no reliable data" — that is a finding,
-  not a failure.
+- It **works synchronously and returns findings before exiting** — it does not spawn background
+  sub-agents and does not return until the findings (or "no reliable data") are in hand.
+- If `/deep-research` is available and runs non-interactively, it phrases the open questions as a
+  research question and uses it; otherwise it searches manually by the rules below.
+- It returns findings **grouped by topic** — each a one-line description + a **primary-source link**;
+  anything unverifiable is "no reliable data" (a finding, not a failure). It writes no file.
 
 ## Search rules
 

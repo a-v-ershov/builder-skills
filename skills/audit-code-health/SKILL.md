@@ -2,6 +2,12 @@
 name: audit-code-health
 description: "Audit whether the built codebase ages well — the whole-codebase health the per-commit quality gate does not measure. Use in the release phase (run by release-product, or standalone). A fresh, independent staff engineer: where the gate fails a single red commit (lint/type/format/tests), this measures the rot the gate can't see across the whole tree — duplication clusters and the refactor-vs-clone ratio (GitClear-style signals), oversized files/functions, dead code, standing suppression debt (accumulated eslint-disable / type:ignore / noqa the gate only blocks when NEW), and TEST-SUITE QUALITY (coverage on critical modules + mutation testing — does the suite actually catch an injected bug, not just execute the line). Read-only: it measures and ranks (mostly major/minor; blocker only when rot is a real reliability risk) but NEVER edits product code — it files majors as rework tasks and writes docs/release/code-health-audit.md. Mostly static, so it fans out freely. Re-runs after a fix to confirm the signal moved."
 argument-hint: "[--reaudit]"
+hooks:
+  PreToolUse:
+    - matcher: "Write|Edit"
+      hooks:
+        - type: command
+          command: "${CLAUDE_PLUGIN_ROOT}/scripts/guard-write-scope.sh '*/docs/*' '*/docs/build-plan/*' '/tmp/*' '/private/tmp/*' '/var/folders/*'"
 ---
 
 # Audit Code Health Skill

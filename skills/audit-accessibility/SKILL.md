@@ -2,6 +2,12 @@
 name: audit-accessibility
 description: "Audit the built product's accessibility against the spec's accessibility decisions. Use in the release phase (run by release-product, or standalone) for a product with a UI; it self-skips cleanly for a CLI / library / API with no UI. A fresh, independent accessibility specialist: it reads the target conformance (e.g. WCAG 2.2 AA), viewports, and platforms from docs/project-spec/design-decisions.research.md and drives the real UI to prove them — automated checks (axe-core) PLUS what automation misses: keyboard-only operability and focus order, visible focus, screen-reader semantics (roles/labels/landmarks/alt), color contrast, motion / reduced-motion, and forms + error messaging. Read-only: it drives and ranks (blocker = a WCAG-A failure on a core journey, per the rubric) but NEVER edits product code — it files blockers/majors as rework tasks into the backlog and writes docs/release/accessibility-audit.md. Brings the UI up through the coordinated entrypoint (env lease). Re-runs after a fix to confirm."
 argument-hint: "[--reaudit]"
+hooks:
+  PreToolUse:
+    - matcher: "Write|Edit"
+      hooks:
+        - type: command
+          command: "${CLAUDE_PLUGIN_ROOT}/scripts/guard-write-scope.sh '*/docs/*' '*/docs/build-plan/*' '/tmp/*' '/private/tmp/*' '/var/folders/*'"
 ---
 
 # Audit Accessibility Skill

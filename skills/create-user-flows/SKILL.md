@@ -122,7 +122,7 @@ coverage check (every feature has a flow; every flow's needs exist). Create `doc
 if needed.
 
 ### Stage 4: Review
-Spawn a separate reviewer subagent to find inconsistencies + gaps and write
+Delegate to the `spec-reviewer` agent to find inconsistencies + gaps and write
 `docs/project-spec/user-flows.review.md` (it does NOT edit the draft; this file is intermediate).
 Method + format: **`../_shared/spec-pipeline/review-method.md`** and `review-template.md`. For
 this phase the reviewer especially probes: a flow needing a capability not in the requirements; a
