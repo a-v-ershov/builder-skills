@@ -102,8 +102,8 @@ Read `docs/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`
 ### Stage 0: Intake
 Read `docs/project-spec/product-requirements.research.md` and
 `docs/project-spec/user-flows.research.md` (and, if present,
-`docs/project-spec/project-brief.research.md` for the user's original intent and preferences —
-settled input). List the features, primary/secondary personas, the flows, and the key screens those
+`docs/project-spec/project-brief.research.md` for the user's original intent — settled input — and
+developer preferences — soft priors). List the features, primary/secondary personas, the flows, and the key screens those
 flows imply. If either of the two required files is missing, tell the user and offer to run
 `/create-user-flows` (or `/define-product-requirements`) first. Do not invent features or flows
 here. Read the mode.
@@ -115,7 +115,10 @@ When a fork is blocked on context only the user holds, invoke `gather-context` s
 the design decisions across five dimensions:
 1. **Design system** — does the product need one? If yes, the *intent* (type scale, color approach,
    spacing system, motion stance) and the **component strategy** (adopt an existing library — which —
-   vs bespoke vs hybrid, and why). Decisions and direction, NOT concrete tokens or values.
+   vs bespoke vs hybrid, and why). Decisions and direction, NOT concrete tokens or values. If the
+   brief records a **design-taste preference**, treat it as a **soft prior** here — bias toward it,
+   but let the product's needs and the category conventions decide; log it as a fork with
+   `Source = preference`.
 2. **Key-screen inventory** — the set of screens/surfaces the product has, drawn from the flows.
    Per screen: name, the flow(s) it serves, its job. Structure and purpose, not layout.
 3. **Viewport & platform behavior** — target platforms (web/responsive, iOS, Android, desktop) and

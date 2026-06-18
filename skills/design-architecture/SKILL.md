@@ -103,7 +103,7 @@ Read `docs/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`
 ### Stage 0: Intake
 Read `docs/project-spec/user-flows.research.md`, `docs/project-spec/product-requirements.research.md`,
 `docs/project-spec/design-decisions.research.md`, and, if present,
-`docs/project-spec/project-brief.research.md` (the user's original intent and constraints). State in one paragraph what the system must
+`docs/project-spec/project-brief.research.md` (the user's original intent and constraints, plus any developer preferences as soft priors). State in one paragraph what the system must
 do, and list the constraints that bound the technology choice: product constraints + raw technical
 expectations (budget, platforms, compliance, "must feel instant", "data stays in EU"); the **design
 decisions that carry technical weight** (media-heaviness, offline/connectivity, realtime UI, target
@@ -145,7 +145,10 @@ measurement). Carry findings + source links into the options.
 Per significant component, present **2–3 integrated options** (structure + concrete tool),
 evaluate each against the component's scenarios and the stage-0 constraints (satisfies / strains /
 cost / ops burden / lock-in) using the stage-2 facts, and **recommend one**. Note where an option
-collapses or splits roles. Then assemble the whole: component map, sync/async boundaries, trust
+collapses or splits roles. Where the brief records a **stack or architecture preference**, use it
+only as a **tie-breaker among options that already satisfy the scenarios** — never as a reason to
+skip a scenario or pick a strained option; log it as a fork with `Source = preference` and record
+any override (see `../_shared/spec-pipeline/elicitation-method.md` → "Read the brief first"). Then assemble the whole: component map, sync/async boundaries, trust
 boundaries, the primary flow traced end-to-end, and a cost & risk sanity check against the budget
 scenario (if it busts the budget or the team can't run it, revisit the options). **If the product
 is security-sensitive** (money, PII/credentials, shared/multi-tenant access), run the **STRIDE-lite

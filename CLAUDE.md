@@ -252,11 +252,17 @@ Conventions for these skills:
   on every question, pushing past the first answer, mirroring back to confirm — until shared
   understanding is reached, then writes the discovery brief (`project-brief.research.md` + summary).
   It captures the user's *intent* (goal, audience, scope, constraints, taste), never validating the
-  idea or defining features (those are later phases) and never solutioning. The same skill is
+  idea or defining features (those are later phases) and never solutioning. It also captures the
+  **developer's standing preferences** as a structured `## Preferences & taste` block (stack &
+  libraries, code style & idioms, design taste, dev tooling, architecture leanings) — recorded as
+  **soft priors**, never decisions: each biases the relevant later phase's fork but a requirement
+  always wins (the two-class rule — intent/constraints settled vs preferences soft — lives in
+  `_shared/spec-pipeline/elicitation-method.md` → "Read the brief first", and each consuming phase
+  logs an applied preference as a fork with `Source = preference`). The same skill is
   callable on demand: any phase can invoke it scoped to a fork blocked on context only the user
   holds (returning the gathered answers), and the user can run it directly to be interviewed on any
-  topic. The interview technique is shared (`_shared/spec-pipeline/elicitation-method.md`) and every
-  phase's elicit step uses it.
+  topic (including just their stack/style preferences). The interview technique is shared
+  (`_shared/spec-pipeline/elicitation-method.md`) and every phase's elicit step uses it.
 - **Idea validation is adversarial.** A cheap KILL / SKIP / SHRINK pre-filter, then forcing
   questions (demand, audience specificity, problem validation, status-quo competitor, wedge,
   business model). Its outputs are the validation research doc + its human summary — no solutioning.

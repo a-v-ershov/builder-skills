@@ -1,6 +1,6 @@
 ---
 name: gather-context
-description: "Interview the human to extract maximum context before (and during) spec work — a relentlessly curious discovery grill that turns a short brief into a rich, shared understanding of what to build. Two roles. As the FIRST step of the create-project-spec pipeline it runs a full intake interview after the user's brief and writes docs/project-spec/project-brief.research.md plus a short human summary, which every later phase reads as settled intent. On demand it is a reusable grill: any phase can invoke it scoped to a fork that's blocked on context only the human holds, and the user can invoke it directly at any time to be interviewed on any topic. Captures the user's intent, audience, scope, constraints, and taste — it does NOT validate the idea or define features (those are validate-idea and define-product-requirements)."
+description: "Interview the human to extract maximum context before (and during) spec work — a relentlessly curious discovery grill that turns a short brief into a rich, shared understanding of what to build. Two roles. As the FIRST step of the create-project-spec pipeline it runs a full intake interview after the user's brief and writes docs/project-spec/project-brief.research.md plus a short human summary, which every later phase reads as settled intent. On demand it is a reusable grill: any phase can invoke it scoped to a fork that's blocked on context only the human holds, and the user can invoke it directly at any time to be interviewed on any topic. Captures the user's intent, audience, scope, constraints, and developer preferences (stack, code style, design taste, tooling, architecture leanings — kept as soft priors for later phases) — it does NOT validate the idea or define features (those are validate-idea and define-product-requirements)."
 argument-hint: "[topic or fork to grill on]"
 ---
 
@@ -106,8 +106,14 @@ mirror back to confirm. Dimensions to cover (the human's *context*, not decision
    platform), and what "done" / success looks like *to them*.
 6. **Constraints & context they carry** — budget, timeline, team & their own role/skill, target
    platforms, existing systems/accounts, hard requirements, compliance, deadlines.
-7. **Preferences & taste** — references and products they admire or hate, "like X but Y",
-   non-negotiables, stack wishes (captured as preference + later fork, never decided here).
+7. **Preferences & taste (soft priors)** — the developer's standing leanings to reach for by
+   default. Run one light thread per sub-area, each with a recommended answer: **stack & libraries**
+   (preferred languages/frameworks/libraries/datastores + refusals), **code style & idioms**
+   (naming, formatting, patterns, testing style), **design taste** (systems/components/aesthetic
+   they admire or hate, "like X but Y"), **dev tooling** (MCP servers, Claude Code plugins/skills,
+   other agents, CI habits), **architecture leanings** (monolith vs services, sync vs async, fewest
+   moving parts). Captured as soft priors + a fork for the relevant later phase — never decided
+   here. Don't over-grill a sub-area the human has no leaning on.
 8. **Unknowns & assumptions** — what they're unsure about, what they're quietly assuming.
 
 Track coverage against these eight; stop per the method's stop condition (no material unknown left),

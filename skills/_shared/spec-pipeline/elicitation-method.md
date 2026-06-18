@@ -83,10 +83,20 @@ yes`) rather than inventing certainty. Name what you deliberately did **not** as
 ## Read the brief first
 
 Every phase reads **`docs/project-spec/project-brief.research.md`** (the discovery dossier from
-`gather-context`) at intake, if present, and treats the user's stated intent, constraints, and
-preferences there as **settled input**. Do not re-ask what the brief already answers — confirm and
-build on it. (The brief is settled *intent*, not settled *truth*: `validate-idea` still
-pressure-tests its claims.)
+`gather-context`) at intake, if present. Treat it as **two distinct classes of input**:
+
+- **Intent & constraints** (the goal, audience, scope, budget, timeline, platforms, compliance, hard
+  requirements) are **settled input** — do not re-ask what the brief already answers; confirm and
+  build on it. (Settled *intent*, not settled *truth*: `validate-idea` still pressure-tests its
+  claims.)
+- **Developer preferences** (the "Preferences & taste" priors — stack & libraries, code style &
+  idioms, design taste, dev tooling, architecture leanings) are **soft priors**, not constraints.
+  Bias the relevant fork toward them and use them as a **tie-breaker among options that already
+  satisfy this phase's requirements/scenarios** — but decide on the merits: a requirement or
+  scenario always wins over a preference, and a preference never short-circuits the
+  requirements-first step. Log every preference that influenced a decision in the
+  `## Forks / Decisions log` with `Source = preference`; when you override one, record why.
+  (Preferences are soft by design — the human can be wrong about what fits *this* project.)
 
 ## Escalate to `gather-context` when a fork blocks understanding
 

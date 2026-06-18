@@ -104,7 +104,11 @@ the one outward-facing step and always confirms.
 - **`propagate-changes`** — after an upstream spec doc is edited, reconcile downstream docs + backlog
   forward, surgically; runs automatically, pauses only on critical/destructive changes. Never writes code.
 - **`gather-context`** is also a reusable grill: any phase can call it for a fork blocked on context
-  only the user holds, and the user can run it directly to be interviewed on any topic.
+  only the user holds, and the user can run it directly to be interviewed on any topic (including
+  just their stack/style preferences). It captures the developer's standing preferences (stack, code
+  style, design taste, tooling, architecture leanings) as **soft priors** in the brief; downstream
+  phases consume them as overridable tie-breakers, logged in their Forks / Decisions log with
+  `Source = preference`.
 
 ## Where things live
 

@@ -125,7 +125,7 @@ Read `docs/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`
 ### Stage 0: Intake
 Read `docs/project-spec/architecture.research.md` and `docs/project-spec/user-flows.research.md`
 (and, if present, `docs/project-spec/project-brief.research.md` for the user's original intent and
-constraints). List the components and their concrete technologies, the production/cloud services each maps to
+constraints, plus any developer preferences — dev tooling, code style — as soft priors). List the components and their concrete technologies, the production/cloud services each maps to
 (object store, managed database, queue, BaaS, …), and the flows that must be testable. Capture the
 dev-environment constraints: developer OS targets, the AI coding agents actually in use (Claude
 Code, and any others), and existing team tooling. If `architecture.research.md` is missing, tell
@@ -178,7 +178,12 @@ When a fork is blocked on context only the user holds, invoke `gather-context` s
    agent more reach (browser-driving, db, cloud/log access, HTTP); the **recommended Anthropic /
    Claude Code plugins & skills** that improve development & verification for *this* stack and why;
    and equivalent config for **other agents** the team uses. Choose tooling for how much
-   verification power it hands the agent, not by fashion.
+   verification power it hands the agent, not by fashion. Where the brief records **dev-tooling or
+   code-style preferences**, treat them as **soft priors** — fold tooling leanings into this
+   pillar's choices, and **distil code-style leanings into the project `CLAUDE.md` content** above
+   so `implement-feature` follows them without re-reading the brief; log each as a fork with
+   `Source = preference` (see `../_shared/spec-pipeline/elicitation-method.md` → "Read the brief
+   first").
 
 - **interactive:** ask, grouped by pillar; do not dump everything at once.
 - **autopilot:** choose each from the architecture + (stage 2) tool facts + best judgment; record

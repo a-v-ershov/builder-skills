@@ -36,10 +36,23 @@ Capture a concrete recent example if one was given.>
 existing systems/accounts/licenses, hard requirements, compliance. Facts about the human's world
 that bound later decisions.>
 
-## Preferences & taste
+## Preferences & taste (soft priors)
 
-<References and products they admire or hate ("like X but Y"), non-negotiables, stack wishes and
-refusals. Captured as preference + a fork for the relevant later phase — NOT decided here.>
+The developer's standing leanings — what they like to reach for by default. Captured here as **soft
+priors**, NOT decided: each biases the relevant later phase's fork but never overrides a requirement
+(see `_shared/spec-pipeline/elicitation-method.md` → "Read the brief first"). Record any the human
+stated, with refusals ("never X"); leave a sub-area out entirely if they have no leaning there.
+
+- **Stack & libraries** *(→ design-architecture)*: <preferred languages, frameworks, libraries,
+  datastores; refusals.>
+- **Code style & idioms** *(→ design-dev-architecture / implement-feature via project CLAUDE.md)*:
+  <naming, formatting, patterns, testing style.>
+- **Design taste** *(→ define-design-decisions)*: <design systems / component libraries / aesthetic
+  they admire or hate, "like X but Y".>
+- **Dev tooling** *(→ design-dev-architecture)*: <MCP servers, Claude Code plugins/skills, other
+  agents, CI habits.>
+- **Architecture leanings** *(→ design-architecture)*: <monolith vs services, sync vs async, "fewest
+  moving parts", and similar standing biases.>
 
 ## Unknowns & assumptions
 
