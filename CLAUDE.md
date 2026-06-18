@@ -1,502 +1,93 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+A collection of **skills and agents for Claude Code** for coding workflows, shipped as a plugin you
+can install into any project. Structure informed by [gstack](https://github.com/garrytan/gstack).
 
-## What this repository is
+> The full pipeline map lives in [`skills/CLAUDE.md`](skills/CLAUDE.md) (loads on demand when you edit
+> `skills/`); per-skill detail lives in each `skills/<name>/SKILL.md` and the `_shared/*.md` methods.
+> This file holds only what every session needs — don't restate the pipeline detail here.
 
-This repository is a collection of **skills and agents for Claude Code**, focused on
-**coding workflows**. Each skill packages a reusable, opinionated procedure (e.g. planning,
-review, debugging, shipping) that Claude Code can invoke on demand.
+## Respond in the user's language
 
-The design and structure are informed by [gstack](https://github.com/garrytan/gstack) — a
-mature, production-grade collection of Claude Code coding skills. We study gstack's conventions
-(skill anatomy, progressive disclosure, decision flowcharts, safety guardrails) as a
-reference while building our own set.
+Every skill **responds and reasons in the language the user wrote in** — Russian in, Russian out;
+English in, English out. Nothing to configure; detect it from the message.
 
-## Core design requirement: respond in the user's language
-
-Every skill in this repository MUST **respond in, and reason in, the language the user addressed
-it in**. If the user wrote in Russian, the skill answers and thinks in Russian; in English, it
-uses English; and so on. There is nothing to configure — detect the user's language from their
-message and match it.
-
-Guidelines:
-
-- This applies only to natural-language text (questions, summaries, reports, explanations). It
-  MUST NOT translate code, identifiers, file paths, commands, or API names.
-- When a skill spawns subagents, instruct them to follow the same rule, so the whole flow speaks
-  the user's language consistently.
-- Commit messages are the one fixed exception: they are ALWAYS written in English (see the
-  `commit` skill), regardless of the user's language.
+- Natural-language text only — never translate code, identifiers, paths, commands, or API names.
+- A skill tells every subagent it spawns the same rule, so the whole flow stays consistent.
+- **Exception:** git commit messages are ALWAYS written in English.
 
 ## Repository layout
 
-This repo is **both a Claude Code plugin marketplace and the plugin it ships** — so the skills
-can be installed into any project from GitHub.
-
-The plugin is collapsed into the repo root: the marketplace catalog and the plugin manifest
-both live in `.claude-plugin/`, and the plugin's components sit at the repo root.
+This repo is **both the marketplace and the plugin it ships** — the plugin is collapsed into the repo
+root, so the marketplace `source` is `"./"`.
 
 ```
-.claude-plugin/marketplace.json          # marketplace catalog (lists the plugin; source: "./")
-.claude-plugin/plugin.json               # the plugin manifest
-skills/<name>/SKILL.md                   # one directory per skill
-skills/<name>/references/*.md            # bundled templates/rubrics (progressive disclosure)
-skills/_shared/spec-pipeline/*.md        # shared methodology for the project-spec phases (no SKILL.md)
-skills/_shared/build-pipeline/*.md       # shared methodology for the build phase (no SKILL.md)
-skills/_shared/release-pipeline/*.md     # shared methodology for the release phase (no SKILL.md)
-skills/_shared/agent-guide.md            # shared: the project CLAUDE.md "project map" block (cross-cutting, no SKILL.md)
-agents/*.md                              # named subagent roles (spec-reviewer, spec-researcher, implementer, verifier, ui-prototyper)
-scripts/*.sh                             # hook helpers (e.g. guard-write-scope.sh, used by skill-scoped hooks)
-CLAUDE.md
-README.md
+.claude-plugin/marketplace.json   # marketplace catalog (lists the plugin; source: "./")
+.claude-plugin/plugin.json        # the plugin manifest (carries the version)
+skills/<name>/SKILL.md            # one dir per skill (+ references/*.md, load on demand)
+skills/_shared/*/*.md             # shared methodology, no SKILL.md (spec/build/release pipelines + agent-guide.md)
+agents/*.md                       # named subagent roles (auto-discovered — no plugin.json entry)
+scripts/*.sh                      # hook helpers (e.g. guard-write-scope.sh)
 ```
 
-- Skills live under `skills/` and agents under `agents/` — component dirs sit at the **plugin
-  root**, not inside `.claude-plugin/`. `agents/` is **auto-discovered** (no `plugin.json` entry
-  needed; the validator rejects an explicit `agents` field).
-- `SKILL.md` = YAML frontmatter (`name` + `description`) + a thin procedure with a copyable
-  checklist. Long templates go in `references/` and load on demand.
-- Marketplace plugin `source` must be a relative path starting with `./`. Because the plugin is
-  the repo root, the source is `"./"` (the marketplace-root source). A bare `"."` is NOT a valid
-  source — relative paths must start with `./`.
-- Validate any change with `claude plugin validate .`.
+- Component dirs (`skills/`, `agents/`) sit at the **plugin root**, not inside `.claude-plugin/`.
+- Marketplace `source` must start with `./`; a bare `"."` is invalid.
+- **Validate any change with `claude plugin validate .`** (test locally via `/plugin marketplace add ./`).
 
-### Installing the skills into another project
+## Versioning — never auto-bump
 
-```
-/plugin marketplace add a-v-ershov/builder-skills
-/plugin install builder-skills@builder-skills
-```
+The plugin's `version` (`.claude-plugin/plugin.json`, semver) is **owned by the user**. The agent MUST
+NOT edit it on its own initiative — only when the user explicitly asks. Consumers receive changes via
+`/plugin update` only once it's bumped, but the agent never drives the bump (may mention skills changed,
+nothing more). Keep `metadata.version` in `marketplace.json` in sync when the user does bump.
 
-Skills then appear namespaced as `builder-skills:<skill>` (e.g. `builder-skills:validate-idea`).
+## The three pipelines (overview)
 
-### Versioning
+Three sequential pipelines, each conducted by a thin **orchestrator** that sequences focused sub-skills
+(it conducts, it does not duplicate). See [`skills/CLAUDE.md`](skills/CLAUDE.md) for the full map.
 
-The plugin carries an explicit `version` in `.claude-plugin/plugin.json`
-(semver). Consumers only receive changes via `/plugin update` when this version is **bumped** —
-pushing skill changes without bumping is ignored downstream.
+- **Spec** (`create-project-spec`) — raw idea → buildable spec. Writes docs only. Each phase runs the
+  same machine: *elicit → research (cite sources) → draft → adversarial review → merge → research doc +
+  human summary*. Greenfield by default; `project_type: existing` runs `map-codebase` first (brownfield).
+- **Build** (`build-product`) — spec → working software. **Mutates the repo.** Sequential: one task at a
+  time, single working tree, no parallelism. Implement ↔ an independent verifier that authors adversarial
+  tests, behind an enforced quality gate (`make check` + hooks).
+- **Release** (`release-product`) — built product → cut release. Read-only audits **fan out in parallel**,
+  file findings as rework (never fix in place), re-audit to confirm, then `cut-release` (gated, stops
+  before prod deploy).
 
-**Bump policy:** the `version` field is **owned by the user**. The agent MUST NOT edit it on its
-own initiative under any circumstance — only when the user explicitly asks for a bump. The user
-decides when a bump is due and will request it; the agent does not drive it. The agent may, at
-most, mention in passing that skills changed, but MUST NOT change the version, propose a specific
-number as an action, or treat a bump as pending work. Never auto-bump.
+Skills are **verbs**; their outputs are **nouns**. All artifacts are committed project documentation
+under `docs/` (`project-spec/`, `build-plan/`, `project-setup/`, `release/`) plus the root `DESIGN.md`
+(UI projects). The transient `*.review.md` and `docs/build-plan/mockups/` are the only gitignored items.
 
-## Skill authoring conventions
+## Skill & agent authoring conventions
 
-Grounded in Anthropic's Agent Skills best practices and patterns observed across mature
-collections (gstack, BMAD-METHOD, Spec Kit, Pimzino spec-workflow):
+- **Description = discoverability.** Write the `description` in the third person stating WHAT the skill
+  does and WHEN to use it. Claude selects skills from this field — no literal "trigger phrases".
+- **Progressive disclosure.** Thin body (~1,500–2,000 words) + a copyable checklist; long
+  templates/rubrics go in `references/`. Shared methodology lives in `_shared/` — read it for the *how*,
+  don't restate it.
+- **Persona + anti-sycophancy.** Validation/review/audit skills adopt a critical persona, take a
+  position, and name failure patterns instead of hedging.
+- **Named agents** (`agents/`, auto-discovered) carry the pipelines' subagent roles: `spec-reviewer` and
+  `spec-researcher` are self-contained (a plugin agent can't reliably read `_shared/*.md` at runtime);
+  `implementer`/`verifier`/`ui-prototyper` are thin wrappers that `skills:`-preload their procedure skill.
+- **`disable-model-invocation: true`** on side-effecting / outward-facing entry points so they don't
+  auto-fire from a cold chat: `commit`, `build-product`, `setup-dev-environment`, `create-design-system`,
+  `propagate-changes`, `cut-release`, `release-product`. Not set on the doc-only spec phases, the
+  read-only `audit-*`, the build-loop skills, or `generate-mockups`.
+- **Write-scope guard hooks** (declared in a skill's frontmatter, running `scripts/guard-write-scope.sh`)
+  turn a prose invariant into a harness guarantee: `verify-feature` writes tests + `docs/build-plan/`
+  only; `generate-mockups` the scratch mockups tree only; each `audit-*` `docs/**` + the backlog only.
+  **`allowed-tools` is deliberately unused** — we keep the user's permission prompts intact.
 
-- **Description = discoverability.** Write the `description` in the third person and state both
-  WHAT the skill does and WHEN to use it. Claude selects skills from this field. Do NOT rely on
-  literal "trigger phrases".
-- **Progressive disclosure.** Thin orchestrating body (~1,500–2,000 words) + a copyable
-  sequential checklist; long templates/rubrics live in `references/`.
-- **Persona + anti-sycophancy.** Validation and review skills adopt an explicit critical
-  persona, take a position, and name failure patterns instead of hedging.
+## Authoring language
 
-## Agents and tool-access conventions
-
-The pipelines spawn **fresh, role-specific subagents**. The recurring roles are named **agents** under
-`agents/` (auto-discovered — no `plugin.json` entry), so an orchestrator targets a stable
-`subagent_type` instead of describing a generic subagent in prose:
-
-- **`spec-reviewer`** — the adversarial reviewer every spec phase's review stage delegates to (replaces
-  the old `general-purpose` reviewer). **`spec-researcher`** — the research stage's fact-gatherer
-  (replaces the old `general-purpose` researcher). Both are **self-contained**: they carry their own
-  method (taxonomy/severity; search rules/verification-by-fact-type) in their body, because a
-  plugin-shipped agent cannot reliably read the `_shared/*.md` method files at runtime. The shared docs
-  (`review-method.md`, `research-method.md`) keep the orchestration (delegate → merge → delete) and
-  point at the agent.
-- **`implementer`** / **`verifier`** — the build-loop roles `build-product` spawns. They are **thin
-  wrappers** that `skills:`-preload the heavy procedure skill (`implement-feature` / `verify-feature`)
-  and add only a tool profile; the procedure stays single-sourced in the skill. `implementer` carries
-  **no** persistent memory (the design is *fresh per task, discard after* — see `build-config.md`);
-  cross-round continuity comes from `build-product` keeping the same agent alive within a task.
-- **`ui-prototyper`** — the mockup role `generate-mockups` spawns (one per variant, in parallel) to
-  build a single stub UI variant. Same thin-wrapper shape: it `skills:`-preloads `generate-mockups` and
-  does only its one assigned variant; it does not spawn further agents or record the human's choice.
-
-Two documented limits shape the above: a plugin agent **cannot** carry `hooks` / `mcpServers` /
-`permissionMode`, and an agent **cannot** `skills:`-preload a skill marked `disable-model-invocation`.
-
-**`disable-model-invocation: true`** is set on the side-effecting / outward-facing entry points so
-Claude does not auto-fire them from a cold chat: `commit`, `build-product`, `setup-dev-environment`,
-`create-design-system`, `propagate-changes`, `cut-release`, `release-product`. It is **not** set on
-`implement-feature` / `verify-feature` (they are preloaded by the build-loop agents), on
-`generate-mockups` (an on-demand, intent-driven entry point — "show me UI options"), or on the
-read-only `audit-*` and the doc-only spec phases (those are legitimate intent-driven entry points).
-
-**Write-scope guard hooks** turn a prose invariant into a harness guarantee, scoped to the one skill —
-the hook is declared in the skill's frontmatter (not plugin-wide, so it fires only while that skill is
-active) and runs `scripts/guard-write-scope.sh` with an allow-list of path globs, exiting 2 (a blocking
-denial fed back to the agent) on any out-of-scope write:
-
-- `verify-feature` — may write **tests + `docs/build-plan/`** only, never the feature's code.
-- `generate-mockups` — may write **the scratch mockups tree + the task file + a `_mockups/` route + temp**
-  only, never the feature's code (it produces throwaway stub UI, not the implementation).
-- each `audit-*` — read-only re: product code: may write **`docs/**` + the backlog + temp** only.
-
-**`allowed-tools` is deliberately not used** — pre-approving tools would grant a skill standing access
-in every session it is active; we keep the user's permission prompts intact and rely on
-`disable-model-invocation` + the scoped guards instead.
-
-## Development-process skill pipeline (project-spec phase)
-
-The "raw idea → initial project documentation" flow is a fixed, phased pipeline. Each phase is
-its own focused skill and adopts a persona. Internally, every phase runs the same machine —
-**elicit → research (verify world-claims) → draft → adversarial review (a separate problems doc)
-→ conflict gate → merge → dual output** (where **elicit** is the shared, grill-style interview
-technique — `_shared/spec-pipeline/elicitation-method.md`) — and keeps **two** files: a detailed
-source-cited **research** doc and a short human summary. The reviewer's problems doc is
-**intermediate** — applied at the merge stage, then deleted. The `create-project-spec` skill is a
-thin **orchestrator** that sequences the sub-skills — it conducts, it does not duplicate phase
-logic. The pipeline **opens with `gather-context`** (step 1): a discovery interview that turns the
-user's short brief into a rich shared understanding (`project-brief.research.md`) every later phase
-reads as settled intent. `gather-context` runs a lighter variant of the machine (interview-led,
-light research, a coverage-critic review) and is **also a reusable grill** — any phase can invoke
-it scoped to a fork blocked on context only the user holds, and the user can invoke it directly at
-any time to be interviewed on any topic.
-
-The same pipeline also has a **brownfield entry for an already-built codebase** (`project_type:
-existing`, a third `.spec-config.md` setting the orchestrator detects-then-confirms). For an existing
-project a phase-0 skill — **`map-codebase`** — runs first: a forensic "code archaeologist" that
-reverse-engineers the **as-is** facts (structure, stack, domain model, surfaces/flows, tests,
-build/run/env) into `codebase-map.research.md`, tagging each fact observed/claimed/unknown and judging
-nothing. Then every phase runs in **existing-project mode**: it pre-fills its answers from the map,
-interviews the user only for the intent the code can't show, and writes a **TARGET** spec while
-logging each **drift** (built-but-divergent / built-but-unwanted / intended-not-yet-built) — so
-`plan-development` can later turn the gap into build tasks. The behavior is defined once in
-`_shared/spec-pipeline/existing-project-mode.md` and every phase carries a thin `## Existing-project
-mode` pointer to it. `validate-idea` reframes to validate the **go-forward, not the existence** (and
-may self-skip for a pure documentation run). Greenfield is unchanged and stays the default.
-
-| # | Skill | Persona | Research doc (+ `.summary.md`; review intermediate) |
-|---|-------|---------|-----------------------------------------------------|
-| — | `create-project-spec` | Orchestrator (conductor) | — (sequences the steps below; builds the final `summary.md`) |
-| 0 | `map-codebase` *(existing projects only)* | Code archaeologist (reverse-engineer) | `docs/project-spec/codebase-map.research.md` |
-| 1 | `gather-context` | Discovery interviewer (the grill) | `docs/project-spec/project-brief.research.md` |
-| 2 | `validate-idea` | Founder-turned-investor | `docs/project-spec/idea-validation.research.md` |
-| 3 | `define-product-requirements` | Product manager | `docs/project-spec/product-requirements.research.md` |
-| 4 | `create-user-flows` | Product designer | `docs/project-spec/user-flows.research.md` |
-| 5 | `define-design-decisions` | Design-system lead | `docs/project-spec/design-decisions.research.md` |
-| 6 | `design-architecture` | Software architect (requirements-first) | `docs/project-spec/architecture.research.md` (+ `docs/project-spec/adr/*`) |
-| 7 | `design-dev-architecture` | DX / platform engineer | `docs/project-spec/dev-architecture.research.md` (+ `docs/project-spec/adr/*`) |
-
-The adversarial review is **built into each phase** (a spawned reviewer subagent), not a separate
-skill, and its file does not survive the merge. The shared machinery lives in
-`skills/_shared/spec-pipeline/` (the elicitation/interview method, research method, review method,
-dual-output format, pipeline config/modes, and the summary + review templates).
-
-**Artifact location & naming: all project-spec artifacts live in `docs/project-spec/` and are
-named as descriptive nouns** (skills are verbs; their outputs are nouns) — `gather-context` →
-`project-brief`, `validate-idea` →
-`idea-validation`, `define-product-requirements` → `product-requirements`, `create-user-flows` →
-`user-flows`, `define-design-decisions` → `design-decisions`, `design-architecture` →
-`architecture` (+ `adr/`), `design-dev-architecture` → `dev-architecture` (+ `adr/`), all under
-`docs/project-spec/`. **Each phase keeps a pair**:
-`<noun>.research.md` (detailed, source-cited, for the AI/next phase) and `<noun>.summary.md`
-(the human report — maximally compressed and decisions-first: what you must answer, then risks, then
-a few key facts; the only artifact written for the human). A transient `<noun>.review.md` (the
-reviewer's inconsistencies + gaps) is applied at the merge stage and then **deleted** — its
-findings live on in the research doc and its Forks / Decisions log. The orchestrator additionally
-builds a combined human-facing `docs/project-spec/summary.md` at the end of a run.
-
-**Commit policy: everything kept under `docs/project-spec/` is committed project documentation** —
-the `<noun>.research.md` (its Forks / Decisions log is the audit trail of *why*), the
-`<noun>.summary.md`, the combined `summary.md`, the `adr/*`, and `.spec-config.md`. The only
-exception is the transient `<noun>.review.md`, which is **deleted after merge** and additionally
-gitignored (belt-and-suspenders against an aborted run) via a local `docs/project-spec/.gitignore`
-containing `*.review.md`. The artifacts are never hidden in a dot-dir — they are documentation,
-and `docs/` is their visible, conventional home.
-
-Conventions for these skills:
-
-- **Artifacts live in the repo under `docs/project-spec/`.** Phase N reads phase N−1's research
-  doc from there. Each skill creates the directory if it does not exist — and, when creating it,
-  drops a `docs/project-spec/.gitignore` containing `*.review.md` if absent.
-- **Every phase researches and reviews itself.** It verifies its world-claims against real
-  sources (adaptive depth: light web search by default, `/deep-research` only when warranted or
-  requested), cites them inline + in a `## Sources` section, then spawns a separate reviewer
-  subagent that writes `<noun>.review.md`, merges the corrections back, and **deletes the review
-  file** after merging (only the research doc + summary survive). Modeled on the `vibecoding_course`
-  `video-research` skill (research → проверка → synthesis).
-- **Run settings, set once.** `create-project-spec` (or the first standalone phase) asks three
-  settings and writes `docs/project-spec/.spec-config.md`: `mode` (`interactive` | `autopilot`),
-  `final_summary` (`true` | `false`), and `project_type` (`greenfield` | `existing`; absent ⇒
-  greenfield). **interactive** pauses at each fork and each phase's hard gate. **autopilot** lets the
-  AI resolve every fork itself and run phases back-to-back — but it still researches, reviews, and
-  writes both kept files, and **logs every fork** (choice + rationale + confidence) in the doc's
-  `## Forks / Decisions log`; low/medium-confidence forks surface in the human summary as "must
-  answer". Autopilot changes *who answers*, never *whether it's recorded*. `project_type` is
-  orthogonal to `mode` and stacks with it (in autopilot+existing, anything that discards/rewrites
-  working code is still marked `Needs human confirm? = yes`). Each phase reads the config and is
-  independently runnable (asks the settings itself when the config is absent).
-- **Existing-project entry (brownfield) reconstructs the spec from code.** When `project_type:
-  existing`, `map-codebase` runs first (phase 0) to chart the **as-is** facts into
-  `codebase-map.research.md` (observed/claimed/unknown, no judgement), then every phase runs in
-  existing-project mode — pre-fill from the map, interview for the intent the code can't show, write
-  a **TARGET** spec, and log **drift** (the optional `AS-IS`/`TARGET`/`Drift?` columns on the Forks /
-  Decisions log) so `plan-development` delta mode can emit only the gap. Output is the **same**
-  `docs/project-spec/` artifacts, so the build pipeline runs unchanged. One shared methodology doc
-  (`_shared/spec-pipeline/existing-project-mode.md`); each phase carries a thin `## Existing-project
-  mode` pointer. `validate-idea` validates the go-forward, not existence (may self-skip). Greenfield
-  is the default and is untouched.
-- **The `create-project-spec` orchestrator conducts, never duplicates.** It invokes each sub-skill via the Skill
-  tool, lets it run its internal pipeline, then advances per the mode (approval gate in
-  interactive, straight through in autopilot). Each sub-skill responds in the user's language on
-  its own, so the whole pipeline stays consistent. Each sub-skill remains independently runnable.
-- **Context-gathering is a grill, and it's reusable.** `gather-context` opens the pipeline: after
-  the user's short brief it runs an iterative interview — one thread at a time, a recommended answer
-  on every question, pushing past the first answer, mirroring back to confirm — until shared
-  understanding is reached, then writes the discovery brief (`project-brief.research.md` + summary).
-  It captures the user's *intent* (goal, audience, scope, constraints, taste), never validating the
-  idea or defining features (those are later phases) and never solutioning. It also captures the
-  **developer's standing preferences** as a structured `## Preferences & taste` block (stack &
-  libraries, code style & idioms, design taste, dev tooling, architecture leanings) — recorded as
-  **soft priors**, never decisions: each biases the relevant later phase's fork but a requirement
-  always wins (the two-class rule — intent/constraints settled vs preferences soft — lives in
-  `_shared/spec-pipeline/elicitation-method.md` → "Read the brief first", and each consuming phase
-  logs an applied preference as a fork with `Source = preference`). The same skill is
-  callable on demand: any phase can invoke it scoped to a fork blocked on context only the user
-  holds (returning the gathered answers), and the user can run it directly to be interviewed on any
-  topic (including just their stack/style preferences). The interview technique is shared
-  (`_shared/spec-pipeline/elicitation-method.md`) and every phase's elicit step uses it.
-- **Idea validation is adversarial.** A cheap KILL / SKIP / SHRINK pre-filter, then forcing
-  questions (demand, audience specificity, problem validation, status-quo competitor, wedge,
-  business model). Its outputs are the validation research doc + its human summary — no solutioning.
-- **Two layers, bridged by design decisions: product → (design) → technical.**
-  `define-product-requirements` + `create-user-flows` form the product layer (WHAT and for WHOM —
-  features, audience, user flows). `define-design-decisions` is the **bridge**: it sets the design
-  direction (design system, key screens, viewports, target platforms, media-heaviness, offline,
-  accessibility) — design decisions only, never mockups or code (the cheapest mockup is real
-  rendered code at implementation time) — and hands the technically-weighty ones to the next step
-  as quality-attribute scenario inputs. The **concrete** design system (real tokens) is produced
-  *downstream*, in the build phase, by `create-design-system` (the root `DESIGN.md`) — this phase only
-  decides the direction it systematizes (decide → systematize → render). The technical layer is
-  **two** steps: `design-architecture`
-  (the system/production architecture — components + the concrete technologies that realize them,
-  co-designed because the toolbox shapes the decomposition) then `design-dev-architecture` (the
-  inner loop / developer experience — how to run the product locally with prod-parity stand-ins,
-  how to test it in an AI-drivable way, and how to configure the AI tooling for the stack).
-  `design-dev-architecture` never re-opens the stack or redraws the architecture;
-  `define-design-decisions` and the product-layer skills never make technical decisions.
-- **The product definition captures the full committed feature set — no prioritization.** No
-  must/should/could tiers, no MVP cut line, no deferred-feature backlog. Everything in the
-  feature list ships; a feature that doesn't belong is removed, not parked. Every feature traces
-  to a validated need **and carries at least one behavioral, testable acceptance criterion**
-  (Given/When/Then or EARS) — the verifiable definition of done that the `design-dev-architecture`
-  verification loop later proves against. `define-product-requirements` also keeps the **conceptual
-  domain model + glossary** (entities + one canonical vocabulary, reused by every later phase, NOT
-  a database schema) — this lives in the research doc only; the human summary stays non-technical
-  (key concepts at most). User flows then carry their own acceptance criteria on each flow's
-  success outcome and significant states.
-- **Architecture is requirements-first, then co-designed with the toolbox.** Elicit measurable
-  quality-attribute scenarios (cost, performance, security, reliability, scale) **first — before
-  naming any tool**; this ordering is the guard against tool-first design. Then, for each
-  significant component, propose 2–3 *integrated* options that bundle structure + concrete tools,
-  weigh them against the scenarios and the team/budget constraints, and recommend one — scenario-
-  driven, not hype-driven. Default to proven tech and the fewest moving parts (prefer an option
-  that collapses components unless a scenario forbids it). Keep each component labelled with its
-  logical role and record significant decisions as ADRs (options + ruled-out alternatives +
-  trade-offs + status) so a later tool swap stays cheap. **For security-sensitive products** (money,
-  PII/credentials, shared/multi-tenant access) it also runs a **STRIDE-lite threat model** over the
-  component map + trust boundaries (assets, attack surfaces, threats, mitigations) and folds the
-  mitigations back into the design + ADRs; for a product with no sensitive assets it records that
-  it skipped it and why.
-- **Dev architecture is the inner loop, AI-first.** `design-dev-architecture` takes the chosen
-  stack and designs three things together: a **prod-parity local run** (local stand-ins whose APIs
-  mirror the production services, one-command bring-up, seed data — every divergence named as a risk —
-  plus an **environment-access model**, an advisory lock and/or per-run isolation, so concurrent actors
-  never clobber the single shared env), **AI-drivable testing** (test levels + **purpose-built
-  developer/test scripts** that deliberately diverge from prod for fast iteration — distinct from the
-  parity stand-ins, the divergence an intentional speed tradeoff — + an e2e harness an agent can run and
-  verify with no manual step), and **AI tooling tuned to the stack** (Claude Code config, MCP servers,
-  plugins/skills, other agents). Minimal, proven infra — never reproduce production scale/HA locally. It
-  continues the `adr/` numbering from `design-architecture` and never re-opens stack choices.
-
-## Development-process skill pipeline (build phase)
-
-After the spec is complete, a second pipeline turns it into working software. Unlike the spec phase
-(which only writes documents), the build phase **mutates the real repository** — it scaffolds, runs
-commands, and writes code — so it is a categorically different, side-effecting pipeline. It is
-**sequential**: one task at a time, on a single working tree, no worktrees and no parallelism (a
-deliberate choice — parallel worktrees were rejected for their runtime-isolation, merge, and
-orchestration cost). Its shared machinery lives in `skills/_shared/build-pipeline/`.
-
-| # | Skill | Role | Reads / Writes |
-|---|-------|------|----------------|
-| — | `build-product` | Orchestrator (conductor) | the backlog → the build loop |
-| 1 | `setup-dev-environment` | Platform / release engineer | dev-architecture.research.md → scaffolded repo + `docs/project-setup/` |
-| 1b | `create-design-system` *(UI projects)* | Design-system engineer | design-decisions → root `DESIGN.md` + `docs/project-setup/design-system.md` (invoked by setup once the scaffold is up) |
-| 2 | `plan-development` | Delivery tech lead | the spec → `docs/build-plan/` kanban backlog |
-| 3 | `implement-feature` | Implementer | one task → code (UI built against `DESIGN.md`) |
-| 4 | `verify-feature` | Independent verifier (separate agent) | a task → adversarial tests + pass/fail verdict |
-| — | `generate-mockups` *(on demand)* | UI prototyper | a screen / candidate `DESIGN.md` → stub UI variants to compare → a chosen design-note on the task |
-| — | `propagate-changes` | Cross-cutting conductor | a changed spec doc → reconciled downstream docs + backlog |
-
-Conventions for these skills:
-
-- **The build phase mutates the repo; the spec phase did not.** `setup-dev-environment` is the boundary
-  `design-dev-architecture` stopped at — it executes the documented inner loop (installs, compose, seed,
-  one-command bring-up). It plans everything but auto-executes only repo-local scaffolding; global
-  installs, API keys, and plugin installs run only with explicit confirmation (the `careful` pattern),
-  and it is idempotent (detect-state-first, back up before overwrite). It also stands up the **enforced
-  quality gate** (linter + type-checker + tests behind one `make check`, zero-tolerance, a pre-commit
-  hook that blocks the commit on red, a Stop hook that feeds failures back —
-  `skills/_shared/build-pipeline/quality-gate.md`). It also bakes in the **environment-access mechanism**
-  (lock and/or per-run isolation — `skills/_shared/build-pipeline/env-access.md`) and scaffolds the
-  **developer/test-script skeletons** the spec named (built out later as backlog tasks). It wires the
-  **AI harness for the stack** — LSP plugins for symbol-level navigation, a `permissions.deny` list that
-  keeps generated/build/vendor trees out of the agent's reading, and a lean, layered project `CLAUDE.md`
-  (per-package files with scoped commands in a monorepo). It ends with a
-  **smoke-test** (the stack comes up *and* the gate has teeth) rather than the spec phase's adversarial reviewer.
-- **The backlog is a kanban board with blockers — own format, not a library.** One markdown file per
-  task under `docs/build-plan/tasks/` (status in frontmatter; each agent edits only its own file). A
-  task's `blocked_by` list *is* the dependency graph, implicitly; `ready` = `todo` with all blockers
-  `done`. `board.md` is a derived view, regenerated, never hand-edited. Format + lifecycle:
-  `skills/_shared/build-pipeline/backlog-format.md`.
-- **`build-product` conducts; it does not duplicate.** It picks one `ready` task at a time (lowest id),
-  **spawns `implement-feature` as a fresh subagent** (fresh per task, kept across that task's rounds so
-  it remembers what it tried), then spawns `verify-feature` as a separate agent, loops them (bounded by
-  `max_verify_iterations`, default 4 — at the cap the task goes `needs_human`), and on pass runs a
-  behaviour-preserving **solve pass** (the same implementer tidies the task's own diff against bloat) —
-  then, **only once the full quality gate is green** — sets the task `done` and makes a checkpoint commit
-  (via the `commit` skill, carrying the task id). Resumable — the backlog is the source of truth.
-- **Verification runs in a separate, unbiased agent that authors the adversarial tests.** `verify-feature`
-  is generic — it reads the project-specific run/drive/prove commands from `docs/project-setup/verification.md`
-  (written by `setup-dev-environment`) and the task's own acceptance criteria, **authors adversarial
-  automated tests for those criteria** (committed — the implementer may also write its own tests for a fast
-  self-check, but the adversarial layer comes from the side that didn't write the code, and the verifier
-  never touches the implementation), and proves observable outcomes (a screenshot, a DB row, a log line, an
-  asserted response) — never "it ran", and never "tests are green" alone. A fresh agent (not the implementer)
-  is what actually moves a task to `done`; the accumulated tests are the regression net the quality gate runs.
-- **Design system + mockups make the design direction concrete (decide → systematize → render).**
-  `define-design-decisions` only **decides** the direction (no tokens, no pixels). In the build phase,
-  **`create-design-system`** **systematizes** it into a committed **root `DESIGN.md`** — Google's open,
-  tool-neutral format (Apache-2.0): YAML design tokens + prose rationale. It runs **after the scaffold is
-  up** (so candidates render in the real stack), normally invoked by `setup-dev-environment` for a UI
-  project (self-skips for no-UI / no-system), and produces **several** candidate systems — from an
-  imported `DESIGN.md`, an adopted UI kit (Material 3 / shadcn / Tailwind UI / Radix), or generated from
-  brand intent — rendering each so the human picks one. **`generate-mockups`** **renders** disposable
-  stub UI variants (no business logic) against `DESIGN.md` so options can be compared before building; it
-  is **on demand only** (never auto-run in the build loop), records the chosen variant as a design-note
-  on the task (which `implement-feature` then follows), and — like `verify-feature` — **never writes
-  product code** (a write-scope guard hook confines it to the scratch mockups tree + the task file).
-  Mockups are gitignored scratch under `docs/build-plan/mockups/`; rendering degrades gracefully
-  (project stack → standalone HTML → files-only). Shared method:
-  `skills/_shared/build-pipeline/mockup-method.md`. `create-design-system` reuses `generate-mockups`
-  (showcase mode) to render its candidates; the `ui-prototyper` agent builds one variant in parallel.
-- **Two run modes, like the spec phase.** `docs/build-plan/.build-config.md` holds `mode`
-  (`interactive` | `autopilot`) and `max_verify_iterations`. Two things always stop regardless of mode:
-  a `needs_human` escalation, and a critical/destructive change-propagation step.
-- **Change propagation reconciles downstream after a spec edit.** When a stage document changes,
-  `propagate-changes` walks the chain **forward** — each downstream spec skill has an **amend mode** that
-  surgically updates its own doc (preserving its Forks/Decisions log) or self-skips if unaffected — then
-  continues into the backlog via `plan-development`'s amend mode (task deltas: add / modify / cancel /
-  reopen-as-rework). It runs automatically, asking only on critical or destructive questions, and never
-  writes code — rebuilding affected features is a separate `build-product` run. Detection is by reading
-  the files directly (no git/checksum staleness check). Method:
-  `skills/_shared/build-pipeline/propagation-method.md`.
-- **Artifacts live under `docs/build-plan/` (backlog, board, plan summary) and `docs/project-setup/`
-  (setup log, verification contract, design-system record) — both committed project documentation, plus
-  the **root `DESIGN.md`** (the committed, tool-neutral design system).** Skills are verbs; their
-  outputs are nouns. The one gitignored build-phase tree is `docs/build-plan/mockups/` (throwaway
-  mockups; only the chosen screenshot is kept) — the analog of the spec phase's transient `*.review.md`.
-
-## Development-process skill pipeline (release phase)
-
-After the product is built and each feature individually verified, a third pipeline takes it to a **cut
-release**. Where the build phase verifies one task's acceptance criteria, the release phase proves the
-**emergent, cross-cutting properties no single task could** — security, performance, accessibility,
-end-to-end product behavior, code health — then cuts the release. It is the **system-level counterpart of
-`verify-feature`**: each audit is a fresh, independent agent that starts from a **contract the spec phase
-already wrote** (the quality-attribute scenarios + STRIDE-lite threat model in `architecture`, the
-accessibility decisions in `design-decisions`, the user flows in `user-flows`) and proves, with evidence,
-whether the running system upholds it.
-
-Unlike the build phase, **the audits are read-only**, so — uniquely in this collection — they **fan out
-in parallel** (they mutate nothing, they collide on nothing; static audits run free, dynamic ones that
-drive the running stack serialize on the env lease). Audits **never fix code**: a finding becomes a
-rework task in the backlog, fixed by a separate `build-product` run and then re-audited (the
-writer/reviewer split again). Its shared machinery lives in `skills/_shared/release-pipeline/`.
-
-| # | Skill | Role | Proves against / does |
-|---|-------|------|-----------------------|
-| — | `release-product` | Orchestrator (release captain) | runs the audits → files rework → drives build-product → re-audits → `cut-release` |
-| 1 | `audit-security` | Security engineer / CSO | the STRIDE-lite threat model → `docs/release/security-audit.md` |
-| 2 | `audit-performance` | Performance engineer | the quality-attribute scenarios → `docs/release/performance-audit.md` |
-| 3 | `audit-product` | QA lead | the user flows end-to-end (cross-feature) → `docs/release/qa-report.md` |
-| 4 | `audit-code-health` | Staff engineer | code-rot signals + lint/type debt + mutation → `docs/release/code-health-audit.md` |
-| 5 | `audit-accessibility` | Accessibility specialist | the accessibility decisions (WCAG) → `docs/release/accessibility-audit.md` |
-| — | `cut-release` | Release engineer | clean tree + no open 🔴 → docs + version + changelog + release notes + tag + commit + PR (always confirmed; stops before prod deploy) |
-
-Conventions for these skills:
-
-- **Audits are system-level verification — read-only, evidence-driven, and parallel.** Each runs the
-  shared audit machine (read contract → probe → prove → rank → file): a fresh independent agent, starting
-  from the spec contract not the code, that proves a real observable outcome (a measured p95, a secret at
-  `file:line`, a reproduced exploit, a failing WCAG rule) — never "looks fine". They mutate nothing, so
-  `release-product` fans them out together; dynamic audits acquire the env lease so they don't collide on
-  the one running stack. Method: `skills/_shared/release-pipeline/audit-method.md`.
-- **Findings are filed, not fixed (the writer/reviewer split, again).** An audit never edits product code.
-  A 🔴 blocker / 🟡 major becomes a `type: rework` task in the backlog (via `plan-development`'s amend
-  mode); ⚪ minors are logged only. `build-product` fixes the tasks; the audit **re-runs to confirm** —
-  a 🔴 clears only by re-proving it closed, never by assumption. The loop is bounded by
-  `max_audit_iterations` (default 3); a 🔴 at the cap escalates to `needs_human`. Severity + what blocks a
-  release: `skills/_shared/release-pipeline/severity-rubric.md` — and the rubric guards against the
-  documented "reviewer always finds problems" failure mode (flag against the contract, no finding without
-  proof, speculative hardening is ⚪ at most).
-- **`cut-release` is the only outward-facing step** — and combines the documentation update, the version
-  bump (if needed), the changelog/release notes, and the tag/commit/PR into one gated skill. It always
-  confirms before acting (the `careful` pattern) and **stops before any production deploy** — deploy and
-  post-deploy canary monitoring are out of scope by deliberate decision (project-specific and dangerous;
-  left to a separate manual step).
-- **Two run modes, like the other phases.** `docs/release/.release-config.md` holds `mode`
-  (`interactive` | `autopilot`), `max_audit_iterations`, and which `audits` are enabled (each self-skips
-  if its contract is absent/N/A). Two things always stop regardless of mode: a 🔴 surviving the cap
-  (`needs_human`), and `cut-release` itself. Config + modes:
-  `skills/_shared/release-pipeline/release-config.md`.
-- **`release-product` conducts; it does not duplicate.** It invokes the focused sub-skills and **reuses
-  the build-pipeline machinery** (the backlog + `plan-development` amend, `build-product`, `env-access`,
-  the quality gate, `commit`) rather than re-implementing it — the release phase sits on top of the build
-  phase, it does not fork it.
-- **Artifacts live under `docs/release/`** — the per-audit findings docs (the audit trail of *why the
-  release was, or wasn't, cut*) and the combined `release-summary.md` (the decisions-first human report).
-  Committed project documentation; skills are verbs, their outputs are nouns. `docs/release/` is indexed
-  in the project documentation map (`agent-guide.md`), refreshed by `release-product` (and by
-  `cut-release` on a standalone cut).
-
-## Project documentation map (the target project's `CLAUDE.md`)
-
-Both pipelines write `docs/`; an agent later working in the project needs to find its way around them.
-So the target project's **root `CLAUDE.md`** carries a small, marker-delimited **project documentation
-map** — a navigational index of `docs/project-spec/`, `docs/build-plan/`, `docs/project-setup/`, and
-the root `DESIGN.md` (UI projects) plus the order to read them in before changing code. It is a **map, not a copy**: it points at the
-artifacts, never restates them. This is a deliberately separate concern from the *built-in* `/init`
-(which writes a `CLAUDE.md` from analysing existing code) — the map is spec/backlog-aware, not
-code-derived.
-
-The behavior is defined once, in the shared spec **`skills/_shared/agent-guide.md`**, and three skills
-render the **same** marked block at natural moments (so nothing is duplicated): `create-project-spec`
-**seeds** it at run start (artifacts shown as *planned*) and **finalizes** it at the end;
-`setup-dev-environment` writes it inside the project `CLAUDE.md` it scaffolds (next to its stack notes
-+ commands, which live outside the markers); `plan-development` **refreshes** it once the backlog
-exists. The operation is **idempotent and non-destructive** — writers touch only the content between
-`<!-- builder-skills:project-map:start -->` and `<!-- builder-skills:project-map:end -->`, never the
-user's own `CLAUDE.md` content. There is no separate skill for this — it is shared methodology, like
-the research/review/output-format docs.
-
-## Authoring conventions
-
-- **Write all skill content (instructions, prompts, descriptions) in English**, regardless of the
-  language a skill responds in at runtime. Responding in the user's language is runtime behavior,
-  not the language the skills themselves are written in.
-- **Write this CLAUDE.md and all repository documentation in English.**
-- **Always write git commit messages in English.**
+**Write all skill content, this file, and all repository documentation in English.** Responding in the
+user's language is runtime behavior, not the language the skills are authored in. Commit messages: English.
 
 ## Git workflow
 
-- **Never create a separate feature branch unless explicitly asked to.** Work on the current
-  branch by default; only branch when the user explicitly requests it.
+- **Never create a feature branch unless explicitly asked.** Work on the current branch by default.
+- The `.githooks/commit-msg` hook blocks AI-attribution trailers (`Co-Authored-By: Claude`, etc.);
+  enable once per clone with `git config core.hooksPath .githooks`. Do not add such trailers.

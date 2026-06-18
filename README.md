@@ -18,7 +18,7 @@ GitHub. Every skill replies in the language you write to it.
 ## What you get
 
 1. **Three pipelines, one command each** — call `create-project-spec`, `build-product`, or `release-product` and one meta-skill conducts every phase for you.
-2. **It interviews you before it builds** — a discovery grill pulls the maximum context out of your head, one question at a time, always with a recommended answer.
+2. **It interviews you before it builds** — a discovery grill pulls the maximum context out of your head, down to your stack and style preferences, one question at a time, always with a recommended answer.
 3. **A separate agent always checks the work** — nothing self-certifies: a reviewer on every spec phase, plus a fresh verifier that writes adversarial tests and is hook-blocked from touching the code.
 4. **A real dev loop + release audits that hunt the AI's own bugs** — an enforced quality gate locally, then independent security / performance / quality / accessibility / doc audits before you ship.
 
@@ -127,21 +127,6 @@ has it installed (a restart applies the update):
 ```
 
 Or turn on auto-update once: `/plugin` → **Marketplaces** → `builder-skills` → **Enable auto-update**.
-
-## Develop
-
-This repo is both the marketplace and the plugin it ships — collapsed into the repo root
-(`.claude-plugin/` + `skills/` + `agents/`), so the marketplace uses `source: "./"`. Validate after
-editing, and test locally from a path:
-
-```
-claude plugin validate .
-/plugin marketplace add ./
-```
-
-The `.githooks/commit-msg` hook blocks AI-attribution trailers in commit messages — enable it once per
-clone with `git config core.hooksPath .githooks`. See [`CLAUDE.md`](CLAUDE.md) for the full design
-conventions.
 
 ---
 
