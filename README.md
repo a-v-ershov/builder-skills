@@ -1,8 +1,7 @@
 # builder-skills
 
-**Take a raw idea to a shipped release with [Claude Code](https://claude.com/claude-code) — one
-reviewed step at a time, so the AI builds the *right* thing and proves it works instead of just
-saying so.**
+**Take a raw idea to a shipped release with Builder Skills — one reviewed step at a time, so the AI
+builds the *right* thing and proves it works instead of just saying so.**
 
 Three gated pipelines — **spec → build → release** — installed as a plugin into any project from
 GitHub. Every skill replies in the language you write to it.
