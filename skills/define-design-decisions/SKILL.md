@@ -177,6 +177,20 @@ forks the human must answer + open risks. Format rules:
 Do NOT start architecture work, produce mockups, or write any UI code in this session unless the
 user explicitly approves and asks.
 
+## Amend mode (change propagation)
+
+When invoked by `propagate-changes` with an upstream change, switch to **amend mode**: reconcile
+`design-decisions.research.md` to the change instead of producing it from scratch. Per
+**`../_shared/build-pipeline/propagation-method.md`**:
+
+1. Read the changed upstream document and your current `design-decisions.research.md`.
+2. **Assess impact** — if this phase is not affected, self-skip: report "no change needed", touch nothing.
+3. If affected, **amend surgically** — update only the parts the change touches in
+   `design-decisions.research.md` (and `design-decisions.summary.md` if the essence changed),
+   **preserving the `## Forks / Decisions log`**. Never regenerate; do scoped research only for the changed part.
+4. **Log it** — add a `## Forks / Decisions log` entry: what upstream changed, how this doc changed.
+5. **Ask only on a critical question** (a decision-changing or low-confidence fork); otherwise proceed and log.
+
 ## Rules
 
 1. Never produce the design-decisions doc after the first message — load the upstream docs and work

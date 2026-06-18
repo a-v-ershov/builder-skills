@@ -196,6 +196,21 @@ forks the human must answer + open risks. Format rules:
 Do NOT scaffold the project, install dependencies, or write implementation code in this session
 unless the user explicitly approves and asks.
 
+## Amend mode (change propagation)
+
+When invoked by `propagate-changes` with an upstream change, switch to **amend mode**: reconcile
+`architecture.research.md` (+ ADRs) to the change instead of producing it from scratch. Per
+**`../_shared/build-pipeline/propagation-method.md`**:
+
+1. Read the changed upstream document and your current `architecture.research.md`.
+2. **Assess impact** — if this phase is not affected, self-skip: report "no change needed", touch nothing.
+3. If affected, **amend surgically** — update only the parts the change touches in
+   `architecture.research.md` (and `architecture.summary.md` if the essence changed), and **update or
+   supersede an affected ADR rather than rewriting its history**, **preserving the `## Forks /
+   Decisions log`**. Never regenerate; do scoped research only for the changed part.
+4. **Log it** — add a `## Forks / Decisions log` entry: what upstream changed, how this doc changed.
+5. **Ask only on a critical question** (a decision-changing or low-confidence fork); otherwise proceed and log.
+
 ## Rules
 
 1. Never produce the architecture doc after the first message — elicit the scenarios and work the

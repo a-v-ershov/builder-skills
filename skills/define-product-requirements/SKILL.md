@@ -162,6 +162,20 @@ relations). Format rules: **`../_shared/spec-pipeline/output-format.md`**.
 
 Do NOT start user-flow or architecture work in this session unless the user explicitly approves.
 
+## Amend mode (change propagation)
+
+When invoked by `propagate-changes` with an upstream change, switch to **amend mode**: reconcile
+`product-requirements.research.md` to the change instead of producing it from scratch. Per
+**`../_shared/build-pipeline/propagation-method.md`**:
+
+1. Read the changed upstream document and your current `product-requirements.research.md`.
+2. **Assess impact** — if this phase is not affected, self-skip: report "no change needed", touch nothing.
+3. If affected, **amend surgically** — update only the parts the change touches in
+   `product-requirements.research.md` (and `product-requirements.summary.md` if the essence changed),
+   **preserving the `## Forks / Decisions log`**. Never regenerate; do scoped research only for the changed part.
+4. **Log it** — add a `## Forks / Decisions log` entry: what upstream changed, how this doc changed.
+5. **Ask only on a critical question** (a decision-changing or low-confidence fork); otherwise proceed and log.
+
 ## Rules
 
 1. Never produce the product doc after the first message — load the validation doc and work the
