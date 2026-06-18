@@ -43,6 +43,7 @@ both live in `.claude-plugin/`, and the plugin's components sit at the repo root
 skills/<name>/SKILL.md                   # one directory per skill
 skills/<name>/references/*.md            # bundled templates/rubrics (progressive disclosure)
 skills/_shared/spec-pipeline/*.md        # shared methodology for the project-spec phases (no SKILL.md)
+skills/_shared/build-pipeline/*.md       # shared methodology for the build phase (no SKILL.md)
 CLAUDE.md
 README.md
 ```
@@ -205,6 +206,62 @@ Conventions for these skills:
   manual step), and **AI tooling tuned to the stack** (Claude Code config, MCP servers, plugins/
   skills, other agents). Minimal, proven infra — never reproduce production scale/HA locally. It
   continues the `adr/` numbering from `design-architecture` and never re-opens stack choices.
+
+## Development-process skill pipeline (build phase)
+
+After the spec is complete, a second pipeline turns it into working software. Unlike the spec phase
+(which only writes documents), the build phase **mutates the real repository** — it scaffolds, runs
+commands, and writes code — so it is a categorically different, side-effecting pipeline. It is
+**sequential**: one task at a time, on a single working tree, no worktrees and no parallelism (a
+deliberate choice — parallel worktrees were rejected for their runtime-isolation, merge, and
+orchestration cost). Its shared machinery lives in `skills/_shared/build-pipeline/`.
+
+| # | Skill | Role | Reads / Writes |
+|---|-------|------|----------------|
+| — | `build-product` | Orchestrator (conductor) | the backlog → the build loop |
+| 1 | `setup-dev-environment` | Platform / release engineer | dev-architecture.research.md → scaffolded repo + `docs/project-setup/` |
+| 2 | `plan-development` | Delivery tech lead | the spec → `docs/build-plan/` kanban backlog |
+| 3 | `implement-feature` | Implementer | one task → code |
+| 4 | `verify-feature` | Independent verifier (separate agent) | a task → pass/fail verdict |
+| — | `propagate-changes` | Cross-cutting conductor | a changed spec doc → reconciled downstream docs + backlog |
+
+Conventions for these skills:
+
+- **The build phase mutates the repo; the spec phase did not.** `setup-dev-environment` is the boundary
+  `design-dev-architecture` stopped at — it executes the documented inner loop (installs, compose, seed,
+  one-command bring-up). It plans everything but auto-executes only repo-local scaffolding; global
+  installs, API keys, and plugin installs run only with explicit confirmation (the `careful` pattern),
+  and it is idempotent (detect-state-first, back up before overwrite). It ends with a **smoke-test**
+  (the stack actually comes up) rather than the spec phase's adversarial reviewer.
+- **The backlog is a kanban board with blockers — own format, not a library.** One markdown file per
+  task under `docs/build-plan/tasks/` (status in frontmatter; each agent edits only its own file). A
+  task's `blocked_by` list *is* the dependency graph, implicitly; `ready` = `todo` with all blockers
+  `done`. `board.md` is a derived view, regenerated, never hand-edited. Format + lifecycle:
+  `skills/_shared/build-pipeline/backlog-format.md`.
+- **`build-product` conducts; it does not duplicate.** It picks one `ready` task at a time (lowest id),
+  invokes `implement-feature`, then spawns `verify-feature` as a separate fresh agent, loops them
+  (bounded by `max_verify_iterations`, default 4 — at the cap the task goes `needs_human`), and on pass
+  sets the task `done` and makes a checkpoint commit (via the `commit` skill, carrying the task id).
+  Resumable — the backlog is the source of truth.
+- **Verification runs in a separate, unbiased agent.** `verify-feature` is generic — it reads the
+  project-specific run/drive/prove commands from `docs/project-setup/verification.md` (written by
+  `setup-dev-environment`) and the task's own acceptance criteria, and proves observable outcomes
+  (a screenshot, a DB row, a log line, an asserted response) — never "it ran". A fresh agent (not the
+  implementer) is what actually moves a task to `done`.
+- **Two run modes, like the spec phase.** `docs/build-plan/.build-config.md` holds `mode`
+  (`interactive` | `autopilot`) and `max_verify_iterations`. Two things always stop regardless of mode:
+  a `needs_human` escalation, and a critical/destructive change-propagation step.
+- **Change propagation reconciles downstream after a spec edit.** When a stage document changes,
+  `propagate-changes` walks the chain **forward** — each downstream spec skill has an **amend mode** that
+  surgically updates its own doc (preserving its Forks/Decisions log) or self-skips if unaffected — then
+  continues into the backlog via `plan-development`'s amend mode (task deltas: add / modify / cancel /
+  reopen-as-rework). It runs automatically, asking only on critical or destructive questions, and never
+  writes code — rebuilding affected features is a separate `build-product` run. Detection is by reading
+  the files directly (no git/checksum staleness check). Method:
+  `skills/_shared/build-pipeline/propagation-method.md`.
+- **Artifacts live under `docs/build-plan/` (backlog, board, plan summary) and `docs/project-setup/`
+  (setup log, verification contract) — both committed project documentation.** Skills are verbs; their
+  outputs are nouns.
 
 ## Authoring conventions
 
