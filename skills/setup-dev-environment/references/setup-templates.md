@@ -38,7 +38,8 @@ placeholders from the spec and the detected state.
 ## C. AI tooling  (config auto; plugin/MCP installs gated)
 | Item | Action | From | Gated? |
 |------|--------|------|--------|
-| .claude/settings.json | hooks/permissions incl. **Stop hook running the gate** | AI tooling / quality-gate.md | no (config) |
+| .claude/settings.json | hooks + **`permissions.deny`** (exclude generated/build/vendor) | AI tooling / quality-gate.md / §5 | no (config) |
+| LSP plugin: <lang> | `/plugin install <lang>-lsp@claude-plugins-official` — symbol navigation | AI tooling / §5 | yes (install) |
 | MCP: postgres | register db MCP server | AI tooling | yes (install) |
 | plugin: <name> | install | AI tooling | yes (install) |
 
@@ -160,3 +161,53 @@ Drop this into the project's `.claude/settings.json` (merge it with any existing
   fit the gate's runtime.
 - It is the same gate `make check` runs everywhere; the hook changes only *when* it runs (on stop) and
   *that a red result blocks* — never *what* it checks.
+
+## 5. `.claude/settings.json` — code intelligence (LSP) + navigation deny
+
+Two more blocks in the **same** `.claude/settings.json` (merge with the `hooks` block above): the
+**LSP plugins** that give the agent symbol-level navigation, and a **`permissions.deny`** list that
+keeps generated/build/vendor trees out of the agent's reading and grep.
+
+LSP is delivered as **plugins** from the official marketplace (`claude-plugins-official`); each plugin
+drives a language-server binary that must be on `$PATH`. Recommend the plugin(s) for the stack's typed
+languages — the install is gated (the `careful` pattern, shown as the exact `/plugin install` command),
+the binary is fetched per the plugin. There is no separate "LSP MCP" and no `.claudeignore` file — these
+two settings blocks are the mechanism.
+
+| Language | Plugin | Language-server binary |
+|----------|--------|------------------------|
+| TypeScript / JS | `typescript-lsp` | `typescript-language-server` |
+| Python | `pyright-lsp` | `pyright-langserver` |
+| Go | `gopls-lsp` | `gopls` |
+| Rust | `rust-analyzer-lsp` | `rust-analyzer` |
+| Java | `jdtls-lsp` | `jdtls` |
+| C / C++ | `clangd-lsp` | `clangd` |
+
+```json
+{
+  "enabledPlugins": {
+    "typescript-lsp@claude-plugins-official": true
+  },
+  "permissions": {
+    "deny": [
+      "Read(./**/node_modules/**)",
+      "Read(./**/dist/**)",
+      "Read(./**/build/**)",
+      "Read(./**/.next/**)",
+      "Read(./**/*.generated.*)",
+      "Read(./**/vendor/**)"
+    ]
+  }
+}
+```
+
+- **Pick the plugins for the stack's languages**, not all of them. A typed language left on text-grep
+  navigation is exactly the low-ROI case the research flags — symbol navigation is the high-ROI fix.
+- **`permissions.deny` follows gitignore semantics** (`*` within a path segment, `**` across
+  directories). It blocks the agent from *opening* a generated/vendor file once found (it does not
+  filter the file out of a recursive search result), and it covers `Read` / `Edit` / `Grep` / `Glob`
+  and the recognized Bash file commands. Commit it so the whole team — and every agent — gets the same
+  noise reduction. Tune the globs to the stack (`target/`, `__pycache__/`, `.venv/`, `bin/obj/`).
+- **`enabledPlugins` records the choice**; the actual install is gated like every other plugin/global
+  step. Add the service MCP plugins the dev-architecture tooling section named (e.g. a database or
+  source-control MCP) the same way.

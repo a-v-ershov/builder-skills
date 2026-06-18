@@ -17,7 +17,7 @@ The loop, per task:
 
 ```
 pick one ready task → implement-feature (fresh subagent + cheap gate) → verify-feature (separate agent)
-   → pass?  → full gate green → set done → checkpoint commit (with task id) → regenerate board → next
+   → pass?  → solve pass (tidy the task's own diff) → full gate green → set done → checkpoint commit → regen board → next
    → fail?  → hand findings back to the SAME implement-feature agent, repeat (bounded by max_verify_iterations)
    → cap?   → set needs_human, surface it, move on to the next ready task
 ```
@@ -82,12 +82,24 @@ Repeat until no `ready` task remains:
      bounded `verifier` loop. (Re-confirmation that the audit's finding is closed is the
      release phase's `audit-*` re-run, not this loop.)
    - **`verify`** (cross-cutting) → spawn the `verifier` agent on it directly.
-4. **On PASS → finalize the task:** first confirm the **full quality gate is green** (`make check` —
-   lint/type + the whole accumulated test suite, **`../_shared/build-pipeline/quality-gate.md`**); a red
-   gate routes back to the same `implement-feature` agent (it counts as a round) and is never committed
-   red. Then set `status: done` (history entry) and make a **checkpoint commit** by invoking the
-   `commit` skill — its message carries this task's id (e.g. `[T012]`) and what was done. In interactive
-   you may confirm the commit; in autopilot it commits. **Release the env lease** after the commit.
+4. **On PASS → solve, then finalize the task:**
+   - **Solve pass (anti-bloat).** Before committing, direct the **same `implementer` agent** to a
+     light cleanup pass **scoped to this task's own diff** — remove dead/duplicated code it
+     introduced, collapse needless abstraction, drop over-built generality — strictly
+     **behaviour-preserving** (it must not change what the feature does). Pre-existing rot in code
+     this task didn't touch is **not** in scope: note it as a finding (a `rework` task), never tidy
+     it here. (Why: agents over-produce and don't feel maintenance cost; a deliberate pass keeps
+     bloat from accumulating — the release-phase `audit-code-health` catches only systemic rot, and
+     only much later.)
+   - **Then confirm the full quality gate is green** (`make check` — lint/type + the whole
+     accumulated test suite, which now includes the verifier's committed adversarial tests, so the
+     tidy stays honest; **`../_shared/build-pipeline/quality-gate.md`**); a red gate routes back to
+     the same `implementer` agent (it counts as a round) and is never committed red.
+   - **Then** set `status: done` (history entry) and make a **checkpoint commit** by invoking the
+     `commit` skill — its message carries this task's id (e.g. `[T012]`) and what was done; the
+     `commit` skill splits a substantial cleanup into its own `refactor:` commit, separate from the
+     `feat:` change. In interactive you may confirm the commit; in autopilot it commits. **Release
+     the env lease** after the commit.
 5. **Regenerate `docs/build-plan/board.md`** from the task files.
 6. **Continue** to the next ready task.
 
@@ -108,8 +120,9 @@ ids — the human's action list), and how many are blocked and by what. Point th
 3. **Verify in a separate, fresh agent** — never let the implementer self-approve.
 4. **Bounded loop.** Cap implement↔verify at `max_verify_iterations`; escalate to `needs_human` rather
    than looping forever. `needs_human` always stops for that task, in both modes.
-5. **Checkpoint commit per finished task** — only after the full quality gate is green — carrying the
-   task id; the `commit` skill writes the message.
+5. **Checkpoint commit per finished task** — only after a behaviour-preserving **solve pass** (tidy
+   the task's own diff) *and* the full quality gate is green — carrying the task id; the `commit`
+   skill writes the message and splits a substantial cleanup into its own `refactor:` commit.
 6. **Resume, don't restart.** The backlog is the source of truth — reuse `done`, re-verify a stale
    `in_progress`, never rebuild finished work.
 7. **`board.md` is always regenerated** from the task files; never hand-edited.

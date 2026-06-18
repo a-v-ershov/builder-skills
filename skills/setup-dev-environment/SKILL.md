@@ -97,6 +97,18 @@ Read `docs/build-plan/.build-config.md` for `mode`. If absent (standalone run), 
 - **Coordinate the shared env.** Bake the env-access mechanism into the bring-up command (acquire the
   lock on `make dev`, release on `make down`, lease + stale-reclaim) and/or set up per-run isolation —
   per **`../_shared/build-pipeline/env-access.md`**; gitignore the lock file.
+- **Give the agent symbol-level code intelligence.** For each typed language in the stack, recommend
+  the matching **LSP plugin** from the official marketplace (`typescript-lsp`, `pyright-lsp`,
+  `gopls-lsp`, `rust-analyzer-lsp`, …) so the agent navigates by symbol, not by text grep — and
+  exclude generated/build/vendor trees from its reading with a committed **`permissions.deny`** in
+  `.claude/settings.json`. The deny list is repo-local config (auto-applied); plugin installs are
+  gated. Concrete recipes: `references/setup-templates.md` §5.
+- **Keep the project `CLAUDE.md` lean and layered.** The root file holds the big picture — the
+  project-map block, stack notes, key commands, the load-bearing gotchas — and nothing deeper. **For
+  a monorepo / multi-package repo**, also seed a short `CLAUDE.md` in each package/service with its
+  *local* conventions and its **scoped** commands (the `make check` / test command for *that*
+  package, so the agent doesn't run the whole repo's suite for a one-package change); Claude loads
+  them additively up the tree. For a single small package the root file is enough — don't over-split.
 - **Minimal, proven infra.** Bring up exactly what the spec says; never reproduce production scale/HA
   locally or add tooling the spec didn't choose.
 
@@ -144,8 +156,11 @@ reversibility · idempotency note · already-present?**:
   **`../_shared/build-pipeline/env-access.md`**), and the **skeleton of the developer/test scripts**
   `dev-architecture` specified. *Auto-applicable (repo-local).*
 - **(C) AI tooling** — `.claude/settings.json` (incl. the **Stop / PostToolUse hook** that runs the
-  gate and feeds failures back), MCP server config, recommended plugins/skills from the dev-architecture
-  tooling section. *Config files auto; plugin/MCP installs gated.*
+  gate and feeds failures back, **and a `permissions.deny` list** excluding generated/build/vendor
+  trees from navigation), the **code-intelligence LSP plugin(s)** for the stack's typed language(s)
+  (symbol-level navigation, not text grep), the **standard stack plugins / MCP servers** the
+  dev-architecture tooling section named, and any other MCP config. *Config files (settings.json,
+  `permissions.deny`) auto; plugin / MCP / LSP installs gated.* Recipes: `references/setup-templates.md` §5.
 - **(D) Manual-only** — real secrets/API keys, cloud accounts, licenses. *Cannot be automated — listed
   for the human.*
 

@@ -341,7 +341,10 @@ Conventions for these skills:
   hook that blocks the commit on red, a Stop hook that feeds failures back —
   `skills/_shared/build-pipeline/quality-gate.md`). It also bakes in the **environment-access mechanism**
   (lock and/or per-run isolation — `skills/_shared/build-pipeline/env-access.md`) and scaffolds the
-  **developer/test-script skeletons** the spec named (built out later as backlog tasks). It ends with a
+  **developer/test-script skeletons** the spec named (built out later as backlog tasks). It wires the
+  **AI harness for the stack** — LSP plugins for symbol-level navigation, a `permissions.deny` list that
+  keeps generated/build/vendor trees out of the agent's reading, and a lean, layered project `CLAUDE.md`
+  (per-package files with scoped commands in a monorepo). It ends with a
   **smoke-test** (the stack comes up *and* the gate has teeth) rather than the spec phase's adversarial reviewer.
 - **The backlog is a kanban board with blockers — own format, not a library.** One markdown file per
   task under `docs/build-plan/tasks/` (status in frontmatter; each agent edits only its own file). A
@@ -351,9 +354,10 @@ Conventions for these skills:
 - **`build-product` conducts; it does not duplicate.** It picks one `ready` task at a time (lowest id),
   **spawns `implement-feature` as a fresh subagent** (fresh per task, kept across that task's rounds so
   it remembers what it tried), then spawns `verify-feature` as a separate agent, loops them (bounded by
-  `max_verify_iterations`, default 4 — at the cap the task goes `needs_human`), and on pass — **only once
-  the full quality gate is green** — sets the task `done` and makes a checkpoint commit (via the `commit`
-  skill, carrying the task id). Resumable — the backlog is the source of truth.
+  `max_verify_iterations`, default 4 — at the cap the task goes `needs_human`), and on pass runs a
+  behaviour-preserving **solve pass** (the same implementer tidies the task's own diff against bloat) —
+  then, **only once the full quality gate is green** — sets the task `done` and makes a checkpoint commit
+  (via the `commit` skill, carrying the task id). Resumable — the backlog is the source of truth.
 - **Verification runs in a separate, unbiased agent that authors the adversarial tests.** `verify-feature`
   is generic — it reads the project-specific run/drive/prove commands from `docs/project-setup/verification.md`
   (written by `setup-dev-environment`) and the task's own acceptance criteria, **authors adversarial

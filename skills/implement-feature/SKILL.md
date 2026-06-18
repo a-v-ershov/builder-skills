@@ -54,6 +54,12 @@ language and think in it too. Never translate code, identifiers, commands, or fi
   self-check is not the verdict; the separate `verify-feature` agent decides.
 - **Stay in style and in scope.** Match the codebase; touch only what this task needs.
 - **Leave a clear trail.** The `## Log` note tells the verifier (a fresh agent) what you did and where.
+- **Tidy your own diff when asked (the solve pass).** After the feature passes verification,
+  `build-product` may ask you for a *solve pass*: re-read the diff you produced for this task and
+  remove what you over-built — dead or duplicated code, needless abstraction, speculative generality
+  — keeping behaviour identical (every test stays green). Scope is **your own diff only**; pre-existing
+  rot elsewhere is a finding to note, not your cleanup. This fights the bloat agents accumulate by
+  defaulting to "handle everything".
 
 ## Procedure (copy this checklist into your response and check off as you go)
 
