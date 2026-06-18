@@ -1,6 +1,6 @@
 ---
 name: validate-idea
-description: "Pressure-test a raw product idea before any design or code. Use at the very start of a new project (or a major new feature) when the idea is still vague — to validate demand, audience, the problem, and the business model through adversarial forcing questions, backed by real-world research and an adversarial review pass. Writes a detailed, source-cited docs/project-spec/idea-validation.research.md plus a short human summary; an internal reviewer pass checks the draft and is merged in, then removed. The first step of the create-project-spec pipeline; run before define-product-requirements, create-user-flows, and design-architecture (or let the create-project-spec orchestrator sequence them)."
+description: "Pressure-test a raw product idea before any design or code. Use at the very start of a new project (or a major new feature) when the idea is still vague — to validate demand, audience, the problem, and the business model through adversarial forcing questions, backed by real-world research and an adversarial review pass. Writes a detailed, source-cited docs/project-spec/idea-validation.research.md plus a short human summary; an internal reviewer pass checks the draft and is merged in, then removed. The first validation step of the create-project-spec pipeline; runs after gather-context (reads docs/project-spec/project-brief.research.md if present) and before define-product-requirements, create-user-flows, and design-architecture (or let the create-project-spec orchestrator sequence them)."
 ---
 
 # Idea Validation Skill
@@ -68,12 +68,17 @@ Read `docs/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`
 ```
 
 ### Stage 0: Intake
-Restate the idea in a single sentence and confirm (interactive) or record it (autopilot). If you
-cannot restate it, the idea is too vague — sharpen it (ask, or in autopilot state the assumption
-and log it as a fork) before continuing. Read the mode.
+Read `docs/project-spec/project-brief.research.md` if present (the discovery brief from
+`gather-context`) — treat its intent, audience, and constraints as settled input and don't re-ask
+what it answers. Restate the idea in a single sentence and confirm (interactive) or record it
+(autopilot). If you cannot restate it, the idea is too vague — sharpen it (ask, or in autopilot
+state the assumption and log it as a fork) before continuing. Read the mode.
 
 ### Stage 1: Elicitation
-First the cheap pre-filter, then the six dimensions.
+**Interview technique — `../_shared/spec-pipeline/elicitation-method.md`** (read it): one thread at
+a time, a recommended answer on every question, push past the first answer, mirror back to confirm.
+When a fork is blocked on context only the user holds, invoke `gather-context` scoped to it. First
+the cheap pre-filter, then the six dimensions.
 
 **KILL / SKIP / SHRINK** (~2 min):
 - **KILL** — Should this even exist? What real, observed demand says yes?

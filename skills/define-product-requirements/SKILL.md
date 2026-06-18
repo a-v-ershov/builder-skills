@@ -77,13 +77,18 @@ Read `docs/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`
 ```
 
 ### Stage 0: Intake
-Read `docs/project-spec/idea-validation.research.md`. Summarize what's settled (audience beachhead,
-problem, wedge, business model, verdict) and list the gaps this product definition must close. If
-it is missing, tell the user and offer to run `/validate-idea` first, or capture a short
-validation summary inline. Read the mode.
+Read `docs/project-spec/idea-validation.research.md` and, if present,
+`docs/project-spec/project-brief.research.md` (the discovery brief — the user's intent, scope, and
+preferences; treat it as settled input and don't re-ask what it answers). Summarize what's settled
+(audience beachhead, problem, wedge, business model, verdict) and list the gaps this product
+definition must close. If the validation doc is missing, tell the user and offer to run
+`/validate-idea` first, or capture a short validation summary inline. Read the mode.
 
 ### Stage 1: Elicitation
-Work the product definition across four dimensions:
+**Interview technique — `../_shared/spec-pipeline/elicitation-method.md`** (read it): one thread at
+a time, a recommended answer on every question, push past the first answer, mirror back to confirm.
+When a fork is blocked on context only the user holds, invoke `gather-context` scoped to it. Work
+the product definition across the dimensions below:
 1. **Audience** — primary persona (role, context, the job they hire this product to do);
    segments (primary / secondary / explicitly-not); jobs-to-be-done in the user's words.
 2. **Features (committed scope)** — the full set being built. For each: short name + one-line

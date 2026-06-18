@@ -93,13 +93,18 @@ Read `docs/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`
 
 ### Stage 0: Intake
 Read `docs/project-spec/product-requirements.research.md` and
-`docs/project-spec/user-flows.research.md`. List the features, primary/secondary personas, the
-flows, and the key screens those flows imply. If either file is missing, tell the user and offer to
-run `/create-user-flows` (or `/define-product-requirements`) first. Do not invent features or
-flows here. Read the mode.
+`docs/project-spec/user-flows.research.md` (and, if present,
+`docs/project-spec/project-brief.research.md` for the user's original intent and preferences —
+settled input). List the features, primary/secondary personas, the flows, and the key screens those
+flows imply. If either of the two required files is missing, tell the user and offer to run
+`/create-user-flows` (or `/define-product-requirements`) first. Do not invent features or flows
+here. Read the mode.
 
 ### Stage 1: Elicitation
-Work the design decisions across five dimensions:
+**Interview technique — `../_shared/spec-pipeline/elicitation-method.md`** (read it): one thread at
+a time, a recommended answer on every question, push past the first answer, mirror back to confirm.
+When a fork is blocked on context only the user holds, invoke `gather-context` scoped to it. Work
+the design decisions across five dimensions:
 1. **Design system** — does the product need one? If yes, the *intent* (type scale, color approach,
    spacing system, motion stance) and the **component strategy** (adopt an existing library — which —
    vs bespoke vs hybrid, and why). Decisions and direction, NOT concrete tokens or values.

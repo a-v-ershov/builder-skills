@@ -9,12 +9,19 @@ all the way to a buildable spec, one reviewed step at a time:
 | Step | Skill | Writes |
 |------|-------|--------|
 | — | `create-project-spec` | (orchestrates the steps below) |
-| 1 | `validate-idea` | `docs/project-spec/idea-validation.research.md` (+ `.summary.md`) |
-| 2 | `define-product-requirements` | `docs/project-spec/product-requirements.research.md` (+ `.summary.md`) |
-| 3 | `create-user-flows` | `docs/project-spec/user-flows.research.md` (+ `.summary.md`) |
-| 4 | `define-design-decisions` | `docs/project-spec/design-decisions.research.md` (+ `.summary.md`) |
-| 5 | `design-architecture` | `docs/project-spec/architecture.research.md` (+ `adr/`) |
-| 6 | `design-dev-architecture` | `docs/project-spec/dev-architecture.research.md` (+ `adr/`) |
+| 1 | `gather-context` | `docs/project-spec/project-brief.research.md` (+ `.summary.md`) |
+| 2 | `validate-idea` | `docs/project-spec/idea-validation.research.md` (+ `.summary.md`) |
+| 3 | `define-product-requirements` | `docs/project-spec/product-requirements.research.md` (+ `.summary.md`) |
+| 4 | `create-user-flows` | `docs/project-spec/user-flows.research.md` (+ `.summary.md`) |
+| 5 | `define-design-decisions` | `docs/project-spec/design-decisions.research.md` (+ `.summary.md`) |
+| 6 | `design-architecture` | `docs/project-spec/architecture.research.md` (+ `adr/`) |
+| 7 | `design-dev-architecture` | `docs/project-spec/dev-architecture.research.md` (+ `adr/`) |
+
+The pipeline opens with **`gather-context`** — a discovery grill that interviews you after your
+short brief (one question at a time, always with a recommended answer) until you and it share the
+same understanding of what to build, then writes a project brief every later phase reads. It's also
+reusable: any phase can call it when a fork needs context only you hold, and you can invoke it
+directly anytime to be interviewed on a topic.
 
 Plus `commit` (intelligent, split-aware git commits). Each step stops at a hard gate for your
 approval before the next runs, and each sub-skill is also runnable on its own.

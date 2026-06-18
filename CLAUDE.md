@@ -97,34 +97,44 @@ collections (gstack, BMAD-METHOD, Spec Kit, Pimzino spec-workflow):
 The "raw idea → initial project documentation" flow is a fixed, phased pipeline. Each phase is
 its own focused skill and adopts a persona. Internally, every phase runs the same machine —
 **elicit → research (verify world-claims) → draft → adversarial review (a separate problems doc)
-→ conflict gate → merge → dual output** — and keeps **two** files: a detailed source-cited
-**research** doc and a short human summary. The reviewer's problems doc is **intermediate** —
-applied at the merge stage, then deleted. The `create-project-spec` skill is a thin
-**orchestrator** that sequences the sub-skills — it conducts, it does not duplicate phase logic.
+→ conflict gate → merge → dual output** (where **elicit** is the shared, grill-style interview
+technique — `_shared/spec-pipeline/elicitation-method.md`) — and keeps **two** files: a detailed
+source-cited **research** doc and a short human summary. The reviewer's problems doc is
+**intermediate** — applied at the merge stage, then deleted. The `create-project-spec` skill is a
+thin **orchestrator** that sequences the sub-skills — it conducts, it does not duplicate phase
+logic. The pipeline **opens with `gather-context`** (step 1): a discovery interview that turns the
+user's short brief into a rich shared understanding (`project-brief.research.md`) every later phase
+reads as settled intent. `gather-context` runs a lighter variant of the machine (interview-led,
+light research, a coverage-critic review) and is **also a reusable grill** — any phase can invoke
+it scoped to a fork blocked on context only the user holds, and the user can invoke it directly at
+any time to be interviewed on any topic.
 
 | # | Skill | Persona | Research doc (+ `.summary.md`; review intermediate) |
 |---|-------|---------|-----------------------------------------------------|
 | — | `create-project-spec` | Orchestrator (conductor) | — (sequences the steps below; builds the final `summary.md`) |
-| 1 | `validate-idea` | Founder-turned-investor | `docs/project-spec/idea-validation.research.md` |
-| 2 | `define-product-requirements` | Product manager | `docs/project-spec/product-requirements.research.md` |
-| 3 | `create-user-flows` | Product designer | `docs/project-spec/user-flows.research.md` |
-| 4 | `define-design-decisions` | Design-system lead | `docs/project-spec/design-decisions.research.md` |
-| 5 | `design-architecture` | Software architect (requirements-first) | `docs/project-spec/architecture.research.md` (+ `docs/project-spec/adr/*`) |
-| 6 | `design-dev-architecture` | DX / platform engineer | `docs/project-spec/dev-architecture.research.md` (+ `docs/project-spec/adr/*`) |
+| 1 | `gather-context` | Discovery interviewer (the grill) | `docs/project-spec/project-brief.research.md` |
+| 2 | `validate-idea` | Founder-turned-investor | `docs/project-spec/idea-validation.research.md` |
+| 3 | `define-product-requirements` | Product manager | `docs/project-spec/product-requirements.research.md` |
+| 4 | `create-user-flows` | Product designer | `docs/project-spec/user-flows.research.md` |
+| 5 | `define-design-decisions` | Design-system lead | `docs/project-spec/design-decisions.research.md` |
+| 6 | `design-architecture` | Software architect (requirements-first) | `docs/project-spec/architecture.research.md` (+ `docs/project-spec/adr/*`) |
+| 7 | `design-dev-architecture` | DX / platform engineer | `docs/project-spec/dev-architecture.research.md` (+ `docs/project-spec/adr/*`) |
 
 The adversarial review is **built into each phase** (a spawned reviewer subagent), not a separate
 skill, and its file does not survive the merge. The shared machinery lives in
-`skills/_shared/spec-pipeline/` (research method, review method, dual-output format, pipeline
-config/modes, and the summary + review templates).
+`skills/_shared/spec-pipeline/` (the elicitation/interview method, research method, review method,
+dual-output format, pipeline config/modes, and the summary + review templates).
 
 **Artifact location & naming: all project-spec artifacts live in `docs/project-spec/` and are
-named as descriptive nouns** (skills are verbs; their outputs are nouns) — `validate-idea` →
+named as descriptive nouns** (skills are verbs; their outputs are nouns) — `gather-context` →
+`project-brief`, `validate-idea` →
 `idea-validation`, `define-product-requirements` → `product-requirements`, `create-user-flows` →
 `user-flows`, `define-design-decisions` → `design-decisions`, `design-architecture` →
 `architecture` (+ `adr/`), `design-dev-architecture` → `dev-architecture` (+ `adr/`), all under
 `docs/project-spec/`. **Each phase keeps a pair**:
 `<noun>.research.md` (detailed, source-cited, for the AI/next phase) and `<noun>.summary.md`
-(short, for the human — essence + forks to answer). A transient `<noun>.review.md` (the
+(the human report — maximally compressed and decisions-first: what you must answer, then risks, then
+a few key facts; the only artifact written for the human). A transient `<noun>.review.md` (the
 reviewer's inconsistencies + gaps) is applied at the merge stage and then **deleted** — its
 findings live on in the research doc and its Forks / Decisions log. The orchestrator additionally
 builds a combined human-facing `docs/project-spec/summary.md` at the end of a run.
@@ -161,6 +171,16 @@ Conventions for these skills:
   tool, lets it run its internal pipeline, then advances per the mode (approval gate in
   interactive, straight through in autopilot). Each sub-skill responds in the user's language on
   its own, so the whole pipeline stays consistent. Each sub-skill remains independently runnable.
+- **Context-gathering is a grill, and it's reusable.** `gather-context` opens the pipeline: after
+  the user's short brief it runs an iterative interview — one thread at a time, a recommended answer
+  on every question, pushing past the first answer, mirroring back to confirm — until shared
+  understanding is reached, then writes the discovery brief (`project-brief.research.md` + summary).
+  It captures the user's *intent* (goal, audience, scope, constraints, taste), never validating the
+  idea or defining features (those are later phases) and never solutioning. The same skill is
+  callable on demand: any phase can invoke it scoped to a fork blocked on context only the user
+  holds (returning the gathered answers), and the user can run it directly to be interviewed on any
+  topic. The interview technique is shared (`_shared/spec-pipeline/elicitation-method.md`) and every
+  phase's elicit step uses it.
 - **Idea validation is adversarial.** A cheap KILL / SKIP / SHRINK pre-filter, then forcing
   questions (demand, audience specificity, problem validation, status-quo competitor, wedge,
   business model). Its outputs are the validation research doc + its human summary — no solutioning.

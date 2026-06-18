@@ -1,6 +1,6 @@
 ---
 name: create-project-spec
-description: "Produce a project's initial documentation end to end, from a raw idea to a buildable spec. Use when starting a new project (or a major new initiative) and you want the full guided flow rather than running each step by hand. Orchestrates the pipeline — validate-idea → define-product-requirements → create-user-flows → define-design-decisions → design-architecture → design-dev-architecture — where each phase researches real-world facts, runs an adversarial review (merged in, then removed), and emits a detailed research doc + a short human summary. Asks two setup choices up front (interactive vs autopilot; final combined summary) and can finish with one human-readable spec summary. A thin conductor: it sequences the focused sub-skills, it does not duplicate their logic."
+description: "Produce a project's initial documentation end to end, from a raw idea to a buildable spec. Use when starting a new project (or a major new initiative) and you want the full guided flow rather than running each step by hand. Orchestrates the pipeline — gather-context → validate-idea → define-product-requirements → create-user-flows → define-design-decisions → design-architecture → design-dev-architecture — where each phase researches real-world facts, runs an adversarial review (merged in, then removed), and emits a detailed research doc + a short human summary. Opens with gather-context, which interviews the user to turn a short brief into a rich shared understanding the whole pipeline builds on. Asks two setup choices up front (interactive vs autopilot; final combined summary) and can finish with one human-readable spec summary. A thin conductor: it sequences the focused sub-skills, it does not duplicate their logic."
 argument-hint: "[--from <step>]"
 ---
 
@@ -16,15 +16,18 @@ is intermediate: applied at merge, then deleted):
 
 | Step | Sub-skill | Detailed doc | Human summary |
 |------|-----------|--------------|---------------|
-| 1 | `validate-idea` | `idea-validation.research.md` | `idea-validation.summary.md` |
-| 2 | `define-product-requirements` | `product-requirements.research.md` | `product-requirements.summary.md` |
-| 3 | `create-user-flows` | `user-flows.research.md` | `user-flows.summary.md` |
-| 4 | `define-design-decisions` | `design-decisions.research.md` | `design-decisions.summary.md` |
-| 5 | `design-architecture` | `architecture.research.md` (+ `adr/*`) | `architecture.summary.md` |
-| 6 | `design-dev-architecture` | `dev-architecture.research.md` (+ `adr/*`) | `dev-architecture.summary.md` |
+| 1 | `gather-context` | `project-brief.research.md` | `project-brief.summary.md` |
+| 2 | `validate-idea` | `idea-validation.research.md` | `idea-validation.summary.md` |
+| 3 | `define-product-requirements` | `product-requirements.research.md` | `product-requirements.summary.md` |
+| 4 | `create-user-flows` | `user-flows.research.md` | `user-flows.summary.md` |
+| 5 | `define-design-decisions` | `design-decisions.research.md` | `design-decisions.summary.md` |
+| 6 | `design-architecture` | `architecture.research.md` (+ `adr/*`) | `architecture.summary.md` |
+| 7 | `design-dev-architecture` | `dev-architecture.research.md` (+ `adr/*`) | `dev-architecture.summary.md` |
 
-All under `docs/project-spec/`. Each phase researches and reviews itself — there is no separate
-review step to offer, and no review file survives into the final spec.
+All under `docs/project-spec/`. Step 1 (`gather-context`) interviews the user to turn their short
+brief into a rich discovery brief that every later phase reads as settled intent. Each phase
+researches and reviews itself — there is no separate review step to offer, and no review file
+survives into the final spec.
 
 ## Language
 
@@ -59,12 +62,13 @@ committed project documentation):
 
 ```
 - [ ] Step 0: Detect progress + settle the two settings → write .spec-config.md + seed the project CLAUDE.md map
-- [ ] Step 1: validate-idea                  → gate (interactive) / auto-advance (autopilot)
-- [ ] Step 2: define-product-requirements     → gate / auto-advance
-- [ ] Step 3: create-user-flows               → gate / auto-advance
-- [ ] Step 4: define-design-decisions          → gate / auto-advance
-- [ ] Step 5: design-architecture             → gate / auto-advance
-- [ ] Step 6: design-dev-architecture         → gate / auto-advance
+- [ ] Step 1: gather-context                  → gate (interactive) / auto-advance (autopilot)
+- [ ] Step 2: validate-idea                   → gate / auto-advance
+- [ ] Step 3: define-product-requirements      → gate / auto-advance
+- [ ] Step 4: create-user-flows                → gate / auto-advance
+- [ ] Step 5: define-design-decisions           → gate / auto-advance
+- [ ] Step 6: design-architecture              → gate / auto-advance
+- [ ] Step 7: design-dev-architecture          → gate / auto-advance
 - [ ] Done: build summary.md (if final_summary) + refresh the project CLAUDE.md map + summarize the documentation set
 ```
 
@@ -81,8 +85,9 @@ discipline (idempotent, non-destructive): **`../_shared/agent-guide.md`**. This 
 housekeeping (like writing `.spec-config.md` / `summary.md`), not a phase — keep it to the shared
 block and never touch content outside the markers.
 
-### Steps 1–5: Run each sub-skill, then advance
-For each step in order:
+### Steps 1–7: Run each sub-skill, then advance
+For each step in order (step 1 is `gather-context` — the discovery interview that produces the
+project brief; steps 2–7 are the phases that read it):
 
 1. **Announce** the step and the sub-skill you are about to invoke.
 2. **Invoke the sub-skill** via the Skill tool. It reads `.spec-config.md`, runs its internal

@@ -1,21 +1,20 @@
-# <Phase> — summary
+# <Phase> — report
 
-> Detailed doc: <artifact>.research.md · Mode: <interactive | autopilot> · Date: <YYYY-MM-DD>
+> Detail (for the AI): <artifact>.research.md · Mode: <interactive | autopilot> · Date: <YYYY-MM-DD>
 
-## What this phase decided
+## Decide — what I need from you
 
-- <3–6 bullets in plain language: the essence a human needs to know after this phase. No tables,
-  no citations, no jargon.>
+- **<the question>** — AI chose **<decision>** (confidence: <low | med>). <One line: why, and what
+  breaks if it's wrong.>
 
-## Forks you must answer
+<Only forks marked "Needs human confirm? = yes" in the detailed doc's Forks / Decisions log go here,
+each one line. If there are none: "Nothing — every fork was high-confidence or you decided it.">
 
-- **<fork question>** — AI chose **<decision>** (confidence: <low | med>). <One line: why, and
-  what changes if it's wrong.>
+## Risks
 
-<Only forks marked "Needs human confirm? = yes" in the detailed doc's Forks / Decisions log go
-here. If there are none: "None — every fork was high-confidence or you decided it yourself.">
+- <Each unresolved risk the review couldn't close, one line. If none: "None outstanding.">
 
-## Open risks / unknowns
+## Key facts
 
-- <Anything the review flagged that could not be resolved, one line each. If none, say "None
-  outstanding.">
+- <Up to 5 plain-language bullets: the essence worth knowing. No tables, citations, or jargon — that
+  rigor stays in the detailed doc. Name at most a few key concepts.>

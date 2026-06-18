@@ -1,7 +1,8 @@
 # Output format (shared — spec pipeline)
 
 Every phase keeps **two** documents and produces them from the merged result: a detailed
-AI-facing **research** doc and a short **human summary**. The reviewer's `.review.md` is a
+AI-facing **research** doc and a maximally compressed, decisions-first **human report**
+(`<artifact>.summary.md`). The reviewer's `.review.md` is a
 **working artifact only** — the merge stage applies it and then **deletes it**, so it does not
 survive into the final spec.
 
@@ -44,33 +45,37 @@ deleted `.review.md` leaves a trace).
 - **Needs human confirm?** = `yes` for anything the AI decided at medium/low confidence, or any
   fork with material downside if wrong. These are what the human summary surfaces.
 
-## 2. Human summary — `<artifact>.summary.md`
+## 2. Human report — `<artifact>.summary.md`
 
-Short and scannable — for a person, not for an agent. Target ~½ page. Structure:
+The **only** artifact written for the human — everything detailed lives in `.research.md`, which is
+for the AI / next phases. It is **maximally compressed and decisions-first**: the human opens it and
+immediately sees what they must answer, then the risks, then a few key facts — nothing else. No
+tables, no citations, no jargon, no process narration. Target: well under half a page.
+
+Three sections, in this fixed order (see `summary-template.md`):
 
 ```
-# <Phase> — summary
+# <Phase> — report
 
-> Detailed doc: <artifact>.research.md · Mode: interactive | autopilot
+> Detail (for the AI): <artifact>.research.md · Mode: interactive | autopilot · <YYYY-MM-DD>
 
-## What this phase decided
-- <3–6 bullets: the essence a human needs to know. Plain language.>
+## Decide — what I need from you
+- **<question>** — AI chose **<X>** (confidence: low | med). <one line: why; what breaks if wrong>
+<only "Needs human confirm? = yes" forks; if none: "Nothing — all decided.">
 
-## Forks you must answer
-- **<fork>** — AI chose **<X>** (confidence: <low/med>). <One line why; what changes if it's wrong.>
-- <only the "Needs human confirm? = yes" forks go here. If none: "None — all forks were
-  high-confidence or you decided them.">
+## Risks
+- <each unresolved risk the review couldn't close, one line. If none: "None outstanding.">
 
-## Open risks / unknowns
-- <Anything the review flagged that couldn't be resolved, in one line each.>
+## Key facts
+- <≤5 plain-language bullets: the essence. The rigor stays in the research doc.>
 ```
 
-Keep it free of tables, citations, and jargon. The research doc holds the rigor; this holds the
-gist + the decisions a human still owns. Technical detail — the domain model, glossary, acceptance
-criteria, schemas — stays in the research doc; the summary names at most a few key concepts in
-plain language. Because the `.review.md` is deleted after merge, anything from the review that
-matters to a human lands here (open risks) or in the research doc's Forks / Decisions log + Open
-questions.
+**Decide** comes first on purpose — it is the only part that needs the human's action, so if they
+read nothing else they can still act. **Risks** are the unresolved things the review couldn't close.
+**Key facts** is the compressed essence (the domain model, glossary, acceptance criteria, schemas
+stay in the research doc — name at most a few concepts here). Because the `.review.md` is deleted
+after merge, anything from the review that matters to the human lands here (Risks) or in the research
+doc's Forks / Decisions log + Open questions.
 
 ## 3. The review doc is transient — `<artifact>.review.md`
 
@@ -85,38 +90,28 @@ directory (see `pipeline-config.md`). Everything else under `docs/project-spec/`
 
 ## 4. Final combined summary — `docs/project-spec/summary.md` (orchestrator only)
 
-Built by `create-project-spec` at the end of a run when `final_summary: true`. One document a
-human reads after the whole pipeline (especially an autopilot run):
+Built by `create-project-spec` at the end of a run when `final_summary: true`. Same rule as the
+per-phase report: **decisions-first, maximally compressed**. One short document the human reads
+after the whole pipeline (especially an autopilot run):
 
 ```
-# <Product> — spec summary
+# <Product> — spec report
 
-> Generated <date> · Mode: interactive | autopilot
-> Detailed docs: idea-validation.research.md · product-requirements.research.md ·
-> user-flows.research.md · architecture.research.md · dev-architecture.research.md
+> <date> · Mode: interactive | autopilot
+> Detail (for the AI): project-brief · idea-validation · product-requirements · user-flows ·
+> design-decisions · architecture · dev-architecture (.research.md, under docs/project-spec/)
 
-## Overview
-<2–3 sentences: what the product is and where the spec landed.>
+## Decide — what I need from you
+<Consolidated across all phases: every "Needs human confirm? = yes" fork, one line each, grouped by
+phase. This is the action list. If none: "Nothing outstanding.">
 
-## By phase
-### Idea validation — <verdict>
-<the essence, 2–4 bullets, lifted from idea-validation.summary.md>
-### Product requirements
-<2–4 bullets>
-### User flows
-<2–4 bullets>
-### System architecture
-<2–4 bullets>
-### Dev architecture
-<2–4 bullets>
+## Risks
+<Consolidated unresolved risks across phases, one line each.>
 
-## Forks still needing your answer
-<Consolidated across all phases — every "Needs human confirm? = yes" fork, grouped by phase,
-each one line. This is the action list for the human.>
-
-## Open risks
-<Consolidated unresolved risks across phases.>
+## What it is
+<2–4 plain-language bullets: what the product is and where the spec landed. The per-phase detail
+lives in each .research.md.>
 ```
 
-This file does not re-derive anything — it concatenates the per-phase human summaries and rolls
-up their must-answer forks.
+It re-derives nothing — it rolls up the per-phase reports' **Decide** + **Risks** and adds a 2–4
+bullet gist. Decisions come first so the human's action list is the first thing they see.

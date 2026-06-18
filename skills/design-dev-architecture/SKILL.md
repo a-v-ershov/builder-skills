@@ -115,14 +115,19 @@ Read `docs/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`
 ```
 
 ### Stage 0: Intake
-Read `docs/project-spec/architecture.research.md` and `docs/project-spec/user-flows.research.md`.
-List the components and their concrete technologies, the production/cloud services each maps to
+Read `docs/project-spec/architecture.research.md` and `docs/project-spec/user-flows.research.md`
+(and, if present, `docs/project-spec/project-brief.research.md` for the user's original intent and
+constraints). List the components and their concrete technologies, the production/cloud services each maps to
 (object store, managed database, queue, BaaS, …), and the flows that must be testable. Capture the
 dev-environment constraints: developer OS targets, the AI coding agents actually in use (Claude
 Code, and any others), and existing team tooling. If `architecture.research.md` is missing, tell
 the user and offer to run `/design-architecture` first. Read the mode.
 
 ### Stage 1: Elicitation (three pillars; the verification loop is the centre)
+**Interview technique — `../_shared/spec-pipeline/elicitation-method.md`** (read it): one thread at
+a time, a recommended answer on every question, push past the first answer, mirror back to confirm.
+When a fork is blocked on context only the user holds, invoke `gather-context` scoped to it.
+
 1. **Local-run architecture (prod-parity, one command — "Run it").** Per component: the **local
    stand-in** for any cloud/managed service, chosen for **API parity** (e.g. an S3-API-compatible
    container like MinIO/LocalStack for a prod object store; a database container for a managed

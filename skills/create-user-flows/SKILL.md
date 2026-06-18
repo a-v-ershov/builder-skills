@@ -80,12 +80,17 @@ Read `docs/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`
 ```
 
 ### Stage 0: Intake
-Read `docs/project-spec/product-requirements.research.md`. List the features, primary/secondary
-personas, and jobs-to-be-done. If it is missing, tell the user and offer to run
+Read `docs/project-spec/product-requirements.research.md` and, if present,
+`docs/project-spec/project-brief.research.md` (the user's original intent and preferences — settled
+input, don't re-ask what it answers). List the features, primary/secondary personas, and
+jobs-to-be-done. If the requirements doc is missing, tell the user and offer to run
 `/define-product-requirements` first. Do not invent features here. Read the mode.
 
 ### Stage 1: Elicitation
-Build the flows across three layers:
+**Interview technique — `../_shared/spec-pipeline/elicitation-method.md`** (read it): one thread at
+a time, a recommended answer on every question, push past the first answer, mirror back to confirm.
+When a fork is blocked on context only the user holds, invoke `gather-context` scoped to it. Build
+the flows across three layers:
 1. **Customer journey map** for the primary persona — across stages (discover → onboard → first
    value "aha" → habitual use → return/expand). Per stage: user goal, what they do, the
    touchpoint, the friction/emotion.

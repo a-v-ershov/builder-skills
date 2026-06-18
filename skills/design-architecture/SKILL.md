@@ -102,7 +102,8 @@ Read `docs/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`
 
 ### Stage 0: Intake
 Read `docs/project-spec/user-flows.research.md`, `docs/project-spec/product-requirements.research.md`,
-and `docs/project-spec/design-decisions.research.md`. State in one paragraph what the system must
+`docs/project-spec/design-decisions.research.md`, and, if present,
+`docs/project-spec/project-brief.research.md` (the user's original intent and constraints). State in one paragraph what the system must
 do, and list the constraints that bound the technology choice: product constraints + raw technical
 expectations (budget, platforms, compliance, "must feel instant", "data stays in EU"); the **design
 decisions that carry technical weight** (media-heaviness, offline/connectivity, realtime UI, target
@@ -112,6 +113,10 @@ platforms — each becomes a quality-attribute scenario below); plus **team skil
 `/define-design-decisions` (or `/define-product-requirements`) first. Read the mode.
 
 ### Stage 1: Elicitation (scenarios + capabilities — before any tool)
+**Interview technique — `../_shared/spec-pipeline/elicitation-method.md`** (read it): one thread at
+a time, a recommended answer on every question, push past the first answer, mirror back to confirm.
+When a fork is blocked on context only the user holds, invoke `gather-context` scoped to it.
+
 1. **Quality-attribute scenarios.** Before naming a technology, force each into a concrete,
    testable form (source → stimulus → environment → response → **measure**) across: performance/
    latency, scale/capacity, cost, security/privacy, reliability/availability, maintainability/
