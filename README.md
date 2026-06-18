@@ -1,5 +1,7 @@
 # builder-skills
 
+**English** · [Русский](README.ru.md)
+
 **Take a raw idea to a shipped release with Builder Skills — one reviewed step at a time, so the AI
 builds the *right* thing and proves it works instead of just saying so.**
 
