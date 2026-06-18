@@ -1,70 +1,107 @@
 # builder-skills
 
-A collection of [Claude Code](https://claude.com/claude-code) skills for coding workflows,
-distributed as a plugin you can install into any project from GitHub.
+**Take a raw idea to a shipped release with [Claude Code](https://claude.com/claude-code) — one
+reviewed step at a time, so the AI builds the *right* thing and proves it works instead of just
+saying so.**
 
-The centerpiece is **`create-project-spec`** — a thin orchestrator that takes a raw product idea
-all the way to a buildable spec, one reviewed step at a time:
+Three gated pipelines — **spec → build → release** — installed as a plugin into any project from
+GitHub. Every skill replies in the language you write to it.
 
-| Step | Skill | Writes |
-|------|-------|--------|
-| — | `create-project-spec` | (orchestrates the steps below) |
-| 1 | `gather-context` | `docs/project-spec/project-brief.research.md` (+ `.summary.md`) |
-| 2 | `validate-idea` | `docs/project-spec/idea-validation.research.md` (+ `.summary.md`) |
-| 3 | `define-product-requirements` | `docs/project-spec/product-requirements.research.md` (+ `.summary.md`) |
-| 4 | `create-user-flows` | `docs/project-spec/user-flows.research.md` (+ `.summary.md`) |
-| 5 | `define-design-decisions` | `docs/project-spec/design-decisions.research.md` (+ `.summary.md`) |
-| 6 | `design-architecture` | `docs/project-spec/architecture.research.md` (+ `adr/`) |
-| 7 | `design-dev-architecture` | `docs/project-spec/dev-architecture.research.md` (+ `adr/`) |
+---
 
-The pipeline opens with **`gather-context`** — a discovery grill that interviews you after your
-short brief (one question at a time, always with a recommended answer) until you and it share the
-same understanding of what to build, then writes a project brief every later phase reads. It's also
-reusable: any phase can call it when a fork needs context only you hold, and you can invoke it
-directly anytime to be interviewed on a topic.
+## The 3 problems it fixes
 
-Plus `commit` (intelligent, split-aware git commits). Each step stops at a hard gate for your
-approval before the next runs, and each sub-skill is also runnable on its own.
+1. **AI builds the wrong thing, fast** — it jumps from a one-line prompt straight to code, so you ship a polished version of an unvalidated idea and find out too late.
+2. **AI grades its own homework** — the same agent writes the feature, declares *"it works,"* and writes tests that pass because it wrote them to pass.
+3. **Quality and decisions vanish** — security holes, slow paths, and the reasoning behind choices never show up in a green unit test and are lost between sessions.
 
-Everything under `docs/project-spec/` is **committed project documentation** (research docs,
-summaries, ADRs, and `.spec-config.md`); the only transient file is `*.review.md`, which is
-deleted after merge and gitignored via a local `docs/project-spec/.gitignore`.
+## What you get
 
-Once the spec exists, the **build phase** turns it into working software — sequentially, one task at
-a time, on a single working tree (no parallelism):
+1. **Three pipelines, one command each** — call `create-project-spec`, `build-product`, or `release-product` and one meta-skill conducts every phase for you.
+2. **It interviews you before it builds** — a discovery grill pulls the maximum context out of your head, one question at a time, always with a recommended answer.
+3. **A separate agent always checks the work** — nothing self-certifies: a reviewer on every spec phase, plus a fresh verifier that writes adversarial tests and is hook-blocked from touching the code.
+4. **A real dev loop + release audits that hunt the AI's own bugs** — an enforced quality gate locally, then independent security / performance / quality / accessibility / doc audits before you ship.
 
-| Step | Skill | Writes |
-|------|-------|--------|
-| — | `build-product` | (orchestrates the loop below) |
-| 1 | `setup-dev-environment` | the scaffolded repo + enforced quality gate + `docs/project-setup/` (setup log, verification contract) |
-| 2 | `plan-development` | `docs/build-plan/` — a kanban backlog, one markdown file per task |
-| 3 | `implement-feature` | the feature, in the working tree |
-| 4 | `verify-feature` | adversarial tests + a pass/fail verdict — a separate, unbiased agent |
+**Plus:** replies in your language · reverse-engineers an existing codebase into a spec (brownfield) ·
+leaves committed project memory — docs, ADRs, backlog, a `CLAUDE.md` map — that doesn't rot · ships as
+a plain Claude Code plugin, no extra runtime or MCP server.
 
-`build-product` picks one ready task at a time (a task whose blockers are all `done`), builds it in a
-fresh per-task agent, verifies it in a separate agent that authors adversarial tests (bounded — at the
-cap a task escalates to `needs_human`), and — once the quality gate is green — makes a checkpoint commit
-carrying the task id. When the spec changes later, **`propagate-changes`** walks the
-edit forward through the spec docs and into the backlog, surgically, asking only on critical or
-destructive changes. Everything under `docs/build-plan/` and `docs/project-setup/` is committed
-project documentation.
+---
 
-Under the hood the pipelines spawn their fresh, role-specific subagents as **named agents** (in
-`agents/`) — including the build loop's `implementer` and `verifier`. The verifier carries a
-write-scope **hook**, so the harness (not just an instruction) stops it from editing the feature's
-code: it may write only tests.
+## How it works
 
-Throughout, the project's own root **`CLAUDE.md` carries a "project documentation map"** — a small
-marker-delimited block that indexes the spec, the backlog, and the setup contract and tells any
-coding agent the order to read them in before touching code. `create-project-spec` seeds it at the
-start (artifacts shown as *planned*) and finalizes it at the end; `setup-dev-environment` writes it
-alongside its stack notes; `plan-development` refreshes it once the backlog exists. It is idempotent
-and non-destructive — only the marked block is ever touched. Shared spec:
-`skills/_shared/agent-guide.md`.
+Three pipelines, each a thin **orchestrator** that conducts focused sub-skills; every sub-skill also
+runs on its own.
 
-Every skill **responds in, and thinks in, whatever language you address it in** — write to it in
-Russian and it answers in Russian, in English and it answers in English. Nothing to configure.
-(Commit messages are the one exception: always written in English.)
+### 1 — Spec: idea → buildable spec
+
+`create-project-spec` runs seven persona-driven phases; each researches its claims (source-cited),
+drafts, is checked by an adversarial reviewer, and emits a research doc + a short human summary under
+`docs/project-spec/`.
+
+| Step | Skill | Persona | Produces |
+|------|-------|---------|----------|
+| 1 | `gather-context` | Discovery interviewer | `project-brief` — interviews you until you share the same understanding |
+| 2 | `validate-idea` | Founder-turned-investor | `idea-validation` — KILL / SHRINK / forcing questions |
+| 3 | `define-product-requirements` | Product manager | `product-requirements` — the full feature set, each with testable criteria |
+| 4 | `create-user-flows` | Product designer | `user-flows` — how users move through the product |
+| 5 | `define-design-decisions` | Design-system lead | `design-decisions` — direction, not mockups; the bridge to tech |
+| 6 | `design-architecture` | Software architect | `architecture` + ADRs — quality scenarios first, then components + tech |
+| 7 | `design-dev-architecture` | DX / platform engineer | `dev-architecture` + ADRs — the local inner loop and AI tooling |
+
+> **Brownfield:** point it at existing code (`project_type: existing`) and `map-codebase` runs first
+> to chart the as-is facts; every phase then reconstructs a *target* spec and logs the drift.
+
+### 2 — Build: spec → working software
+
+`build-product` turns the spec into code sequentially — one task at a time, single working tree, no
+parallelism — mutating the real repo.
+
+| Step | Skill | Role |
+|------|-------|------|
+| 1 | `setup-dev-environment` | Scaffolds the repo, brings up the one-command stack, stands up the enforced quality gate (`make check` + hooks) |
+| — | `create-design-system` | *(UI)* makes the design direction concrete as a committed `DESIGN.md` you pick from rendered candidates |
+| 2 | `plan-development` | Emits a kanban backlog — one file per task, where `blocked_by` *is* the dependency graph |
+| 3 | `implement-feature` | Builds one task and gets the quality gate green |
+| 4 | `verify-feature` | A **fresh, separate agent** that authors adversarial tests, drives the real stack, and proves an observable outcome |
+
+It picks the lowest-id ready task, builds it, verifies it in a separate agent (bounded — at the cap a
+task escalates to `needs_human`), and on a green gate makes a checkpoint commit. `generate-mockups`
+renders UI options on demand; `propagate-changes` walks a later spec edit forward into the backlog.
+
+### 3 — Release: working software → cut release
+
+`release-product` proves the cross-cutting properties no single task could, then ships; the audits are
+read-only, so they fan out in **parallel** and file findings as rework — they never fix code themselves.
+
+| Skill | Proves against |
+|-------|----------------|
+| `audit-security` | the STRIDE-lite threat model — secrets, authz, injection, the lethal trifecta |
+| `audit-performance` | the quality-attribute scenarios — measured p95, throughput, N+1, cost |
+| `audit-product` | the user flows, end-to-end and cross-feature |
+| `audit-code-health` | duplication, dead code, suppression debt, test-suite quality (mutation) |
+| `audit-accessibility` | the WCAG target — keyboard, focus, screen-reader, contrast |
+| `cut-release` | clean tree + no open 🔴 → docs, version, changelog, tag, commit, PR (always confirmed; **stops before prod deploy**) |
+
+A blocker becomes a rework task, fixed by a `build-product` run, then **re-audited to confirm it
+closed**.
+
+---
+
+## How it compares
+
+Most tools cover one slice of the arc; builder-skills' bet is the *full* arc plus a separate adversary
+at every stage.
+
+| Tool | What it is | Where builder-skills differs |
+|------|-----------|------------------------------|
+| **[GitHub Spec Kit](https://github.com/github/spec-kit)** | Spec → Plan → Tasks → Implement; templates, agent-agnostic | It stops at implement — no independent verification, no release audits, no built-in research or adversarial review. |
+| **[BMAD-METHOD](https://github.com/bmad-code-org/BMAD-METHOD)** | Agentic-agile framework, 12+ specialist agents | Plans and builds, but has no read-only release-audit phase, no harness-enforced verifier, no brownfield reverse-engineering. |
+| **[Task Master](https://github.com/eyaltoledano/claude-task-master)** | PRD → task decomposition; an MCP project manager | Task management only — it doesn't validate, research, design, or audit; needs an MCP server running. |
+| **[gstack](https://github.com/garrytan/gstack)** | 23 role skills for the per-PR sprint loop | Great on an existing codebase's review/ship loop, but has no idea→spec generator and no spec reconstruction. *(Our design reference.)* |
+| **[SuperClaude](https://github.com/SuperClaude-Org/SuperClaude_Framework)** | ~30 commands + persona agents injected into `CLAUDE.md` | An à-la-carte command toolbox, not a sequenced, gated pipeline with research, review, and a writer/reviewer split baked in. |
+
+---
 
 ## Install
 
@@ -75,54 +112,33 @@ In any project, inside Claude Code:
 /plugin install builder-skills@builder-skills
 ```
 
-Skills then appear namespaced as `builder-skills:<skill>`, e.g. `builder-skills:create-project-spec`.
+Skills appear namespaced as `builder-skills:<skill>`. Start a project with
+**`/builder-skills:create-project-spec`** and answer the three setup questions — or run any single
+skill on its own.
 
 ## Update
 
-The plugin carries an explicit `version`, so an install only picks up changes once that version
-is **bumped** — pushing skill changes without a bump is ignored downstream.
-
-**Maintainer side** (this repo): change the skills, bump `version` in
-`.claude-plugin/plugin.json` (and `metadata.version` in
-`.claude-plugin/marketplace.json`), then push.
-
-**Consumer side** (any project that has it installed): refresh the catalog, update the plugin,
-then restart Claude Code (an update needs a restart to apply):
+An install only picks up changes once the plugin's `version` is **bumped**. To update a project that
+has it installed (a restart applies the update):
 
 ```
 /plugin marketplace update builder-skills
 /plugin update builder-skills@builder-skills
 ```
 
-Or enable auto-update once — `/plugin` → **Marketplaces** → `builder-skills` →
-**Enable auto-update** — and every startup pulls the latest version and prompts `/reload-plugins`.
-(Third-party marketplaces have auto-update off by default.)
+Or turn on auto-update once: `/plugin` → **Marketplaces** → `builder-skills` → **Enable auto-update**.
 
 ## Develop
 
-This repo is both the marketplace (`.claude-plugin/marketplace.json`) and the plugin it ships
-— the plugin is collapsed into the repo root (`.claude-plugin/plugin.json` + `skills/`), so the
-marketplace entry uses `source: "./"`. After editing, validate the manifests:
+This repo is both the marketplace and the plugin it ships — collapsed into the repo root
+(`.claude-plugin/` + `skills/` + `agents/`), so the marketplace uses `source: "./"`. Validate after
+editing, and test locally from a path:
 
 ```
 claude plugin validate .
-```
-
-To test locally before pushing, add the marketplace from a local path:
-
-```
 /plugin marketplace add ./
-/plugin install builder-skills@builder-skills
 ```
 
-### Git hooks
-
-This repo ships a `commit-msg` hook in `.githooks/` that blocks any commit whose message
-contains an AI attribution trailer (`Co-Authored-By: Claude`, "Generated with Claude", etc.).
-Enable it once per clone:
-
-```
-git config core.hooksPath .githooks
-```
-
-See `CLAUDE.md` for the full design conventions.
+The `.githooks/commit-msg` hook blocks AI-attribution trailers in commit messages — enable it once per
+clone with `git config core.hooksPath .githooks`. See [`CLAUDE.md`](CLAUDE.md) for the full design
+conventions.
