@@ -1,6 +1,6 @@
 ---
 name: plan-development
-description: "Turn the finished project spec into a buildable backlog. Use after setup-dev-environment, as the planning step of the build/development phase, to read the committed feature set (docs/project-spec/product-requirements.research.md), the user flows, and the architecture, and emit a kanban backlog under docs/build-plan/: one markdown file per task (type, status, blockers, acceptance criteria, provenance), plus a derived board.md and a short plan.summary.md. Single pass — each task's blocked_by list IS the dependency graph; there is no parallel scheduling. For an existing project (project_type: existing) it runs in delta mode: it diffs the target spec against the reverse-engineered codebase-map and emits ONLY the gap (rework for divergent code, new tasks for unbuilt features, verify tasks for adopted features, a quality-gate setup task), marking already-matching features done. Also runs in amend mode (driven by propagate-changes) to reconcile the backlog with a changed spec via task deltas — add/modify/cancel/reopen-as-rework — never a regenerate. Run before build-product."
+description: "Turn the finished project spec into a buildable backlog. Use after setup-dev-environment, as the planning step of the build/development phase, to read the committed feature set (.buildloop/project-spec/product-requirements.research.md), the user flows, and the architecture, and emit a kanban backlog under .buildloop/build-plan/: one markdown file per task (type, status, blockers, acceptance criteria, provenance), plus a derived board.md and a short plan.summary.md. Single pass — each task's blocked_by list IS the dependency graph; there is no parallel scheduling. For an existing project (project_type: existing) it runs in delta mode: it diffs the target spec against the reverse-engineered codebase-map and emits ONLY the gap (rework for divergent code, new tasks for unbuilt features, verify tasks for adopted features, a quality-gate setup task), marking already-matching features done. Also runs in amend mode (driven by propagate-changes) to reconcile the backlog with a changed spec via task deltas — add/modify/cancel/reopen-as-rework — never a regenerate. Run before build-product."
 ---
 
 # Plan Development Skill
@@ -18,7 +18,7 @@ and no conflict tracking: blockers, and the build loop's one-at-a-time disciplin
 ## Scope discipline
 
 - **Plan from the spec; don't re-decide it.** Every task traces to a feature, flow, or component in
-  `docs/project-spec/`. A spec gap is surfaced back, not patched here.
+  `.buildloop/project-spec/`. A spec gap is surfaced back, not patched here.
 - **No prioritization tiers.** The product spec already committed the full feature set — everything
   in it becomes a task. You order by dependency, not by priority.
 - **You don't build.** Output is the backlog only. Building is `build-product` + `implement-feature`.
@@ -26,19 +26,19 @@ and no conflict tracking: blockers, and the build loop's one-at-a-time disciplin
 ## Inputs and outputs
 
 - **Reads:** `product-requirements.research.md` (features + acceptance criteria), `user-flows.research.md`,
-  `architecture.research.md`, `dev-architecture.research.md`, and `docs/project-setup/setup-log.md` if
-  present. The root `DESIGN.md` + `docs/project-setup/design-system.md` if present (the design system UI
+  `architecture.research.md`, `dev-architecture.research.md`, and `.buildloop/project-setup/setup-log.md` if
+  present. The root `DESIGN.md` + `.buildloop/project-setup/design-system.md` if present (the design system UI
   feature tasks build against — note it in their `## Description`; don't create mockup tasks, mockups are
-  on-demand via `generate-mockups`). For an existing project, also `docs/project-spec/codebase-map.research.md`
+  on-demand via `generate-mockups`). For an existing project, also `.buildloop/project-spec/codebase-map.research.md`
   (the as-is code the spec was reconstructed from — delta mode diffs the target spec against it).
-- **Writes:** `docs/build-plan/tasks/<id>-<slug>.md` (one per task), `docs/build-plan/board.md`
-  (derived), `docs/build-plan/plan.summary.md` (human). Schema + lifecycle:
+- **Writes:** `.buildloop/build-plan/tasks/<id>-<slug>.md` (one per task), `.buildloop/build-plan/board.md`
+  (derived), `.buildloop/build-plan/plan.summary.md` (human). Schema + lifecycle:
   **`../_shared/build-pipeline/backlog-format.md`**. Derivation + amend rules:
   **`../_shared/build-pipeline/planning-method.md`**. Also **refreshes** the project documentation
   map in the root `CLAUDE.md` (the marker block, per **`../_shared/agent-guide.md`**) so the backlog
   becomes discoverable — it touches only that block, nothing else in the file.
 
-`docs/build-plan/` is committed project documentation.
+`.buildloop/build-plan/` is committed project documentation.
 
 ## Language
 
@@ -48,7 +48,7 @@ acceptance-criteria keywords inside the spec.
 
 ## Modes (read this first)
 
-Read `docs/build-plan/.build-config.md` for `mode`. If absent, ask once (default **interactive**) and
+Read `.buildloop/build-plan/.build-config.md` for `mode`. If absent, ask once (default **interactive**) and
 write it. Full rules: **`../_shared/build-pipeline/build-config.md`**.
 
 - **interactive** — confirm the task breakdown and the dependency spine before finalizing; stop at the
@@ -95,22 +95,22 @@ features, foundational setup, flow order. Keep it shallow. In interactive, confi
 dependencies (the spine); in autopilot, log any assumed dependency as a fork.
 
 ### Stage 3: Write the backlog
-Create `docs/build-plan/tasks/` and write each task file (schema: `backlog-format.md`). Regenerate
-`docs/build-plan/board.md`. Write `docs/build-plan/plan.summary.md` (template in `planning-method.md`).
+Create `.buildloop/build-plan/tasks/` and write each task file (schema: `backlog-format.md`). Regenerate
+`.buildloop/build-plan/board.md`. Write `.buildloop/build-plan/plan.summary.md` (template in `planning-method.md`).
 Then **refresh the project documentation map** in the root `CLAUDE.md` so the now-present
-`docs/build-plan/` (board + tasks) appears in it — re-render only the marker block, idempotently, per
+`.buildloop/build-plan/` (board + tasks) appears in it — re-render only the marker block, idempotently, per
 **`../_shared/agent-guide.md`**. (In amend mode, refresh it too, so the map tracks the live backlog.)
 
 ### Stage 4: Gate
 - **interactive:** present the task breakdown, the dependency spine, and any open questions, then STOP:
-  > "Backlog ready → <N> tasks under docs/build-plan/tasks/, board.md, plan.summary.md. Review it.
+  > "Backlog ready → <N> tasks under .buildloop/build-plan/tasks/, board.md, plan.summary.md. Review it.
   > When you approve, run `/build-product` to start building. I will not build automatically."
 - **autopilot:** log the planning forks in `plan.summary.md`, record auto-pass, and hand back to the
   orchestrator (or, standalone, report the files + must-answer forks).
 
 ## Existing-project (delta) mode
 
-When `project_type: existing` (in `docs/project-spec/.spec-config.md`), the spec describes the
+When `project_type: existing` (in `.buildloop/project-spec/.spec-config.md`), the spec describes the
 **TARGET** state of an already-built codebase. The initial backlog is **not** one task per feature —
 most features already exist. Instead, **diff the target spec against `codebase-map.research.md` and
 emit only the gap**, reading the **drift columns** (`AS-IS`/`TARGET`/`Drift?`) the spec phases logged:

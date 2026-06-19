@@ -1,6 +1,6 @@
 # Setup templates
 
-Three documents `setup-dev-environment` produces under `docs/project-setup/`. Fill the angle-bracket
+Three documents `setup-dev-environment` produces under `.buildloop/project-setup/`. Fill the angle-bracket
 placeholders from the spec and the detected state.
 
 > The project `CLAUDE.md` it scaffolds (section B above) is **not** templated here: its stack notes +

@@ -1,6 +1,6 @@
 ---
 name: define-design-decisions
-description: "Decide the design direction that shapes scope and architecture — design system (or none), the inventory of key screens, responsive/viewport behavior, target platforms and their conventions, media-heaviness, offline/connectivity expectations, and the accessibility target — WITHOUT producing pixel layouts, colors, components, or mockups (those are implementation). Use after create-user-flows (reads docs/project-spec/user-flows.research.md and docs/project-spec/product-requirements.research.md) and before design-architecture, because these decisions feed the architecture's quality-attribute scenarios. Writes a detailed, source-cited docs/project-spec/design-decisions.research.md plus a short human summary; an internal reviewer pass checks the draft and is merged in, then removed. The bridge from the product layer to the technical layer — design decisions only, never visual production."
+description: "Decide the design direction that shapes scope and architecture — design system (or none), the inventory of key screens, responsive/viewport behavior, target platforms and their conventions, media-heaviness, offline/connectivity expectations, and the accessibility target — WITHOUT producing pixel layouts, colors, components, or mockups (those are implementation). Use after create-user-flows (reads .buildloop/project-spec/user-flows.research.md and .buildloop/project-spec/product-requirements.research.md) and before design-architecture, because these decisions feed the architecture's quality-attribute scenarios. Writes a detailed, source-cited .buildloop/project-spec/design-decisions.research.md plus a short human summary; an internal reviewer pass checks the draft and is merged in, then removed. The bridge from the product layer to the technical layer — design decisions only, never visual production."
 ---
 
 # Define Design Decisions Skill
@@ -39,7 +39,7 @@ Scope discipline (read carefully):
   screen states from `user-flows.research.md`. Every key screen traces to a flow; reuse the domain
   model's glossary vocabulary.
 
-## Outputs in `docs/project-spec/` (two kept files)
+## Outputs in `.buildloop/project-spec/` (two kept files)
 
 - **`design-decisions.research.md`** — the detailed, source-cited design decisions (for the AI/next phases).
 - **`design-decisions.summary.md`** — the short human summary (essence + forks to answer).
@@ -56,7 +56,7 @@ This never translates code or identifiers (design-system, platform, and tool nam
 
 ## Modes (read this first)
 
-Read `docs/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`) and
+Read `.buildloop/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`) and
 `final_summary`. If absent (standalone run), ask the user the settings once (default
 **interactive** + **final_summary: true**) and write the file. Full rules:
 **`../_shared/spec-pipeline/pipeline-config.md`**.
@@ -100,9 +100,9 @@ Read `docs/project-spec/.spec-config.md` for `mode` (`interactive` | `autopilot`
 ```
 
 ### Stage 0: Intake
-Read `docs/project-spec/product-requirements.research.md` and
-`docs/project-spec/user-flows.research.md` (and, if present,
-`docs/project-spec/project-brief.research.md` for the user's original intent — settled input — and
+Read `.buildloop/project-spec/product-requirements.research.md` and
+`.buildloop/project-spec/user-flows.research.md` (and, if present,
+`.buildloop/project-spec/project-brief.research.md` for the user's original intent — settled input — and
 developer preferences — soft priors). List the features, primary/secondary personas, the flows, and the key screens those
 flows imply. If either of the two required files is missing, tell the user and offer to run
 `/create-user-flows` (or `/define-product-requirements`) first. Do not invent features or flows
@@ -143,15 +143,15 @@ Method — **`../_shared/spec-pipeline/research-method.md`**. Carry the patterns
 the draft (a "platform convention" or "WCAG requires X" claim must cite its source).
 
 ### Stage 3: Draft
-Draft `docs/project-spec/design-decisions.research.md` from
+Draft `.buildloop/project-spec/design-decisions.research.md` from
 `references/design-decisions-template.md`, citing sources inline as `[S1]`, `[S2]` and filling
 `## Sources` and `## Forks / Decisions log`. Fill the **Architecture-feeding decisions** handoff
 section explicitly — each weighty decision paired with the quality-attribute scenario it implies.
-Create `docs/project-spec/` if needed.
+Create `.buildloop/project-spec/` if needed.
 
 ### Stage 4: Review
 Delegate to the `spec-reviewer` agent to find inconsistencies + gaps and write
-`docs/project-spec/design-decisions.review.md` (it does NOT edit the draft; this file is
+`.buildloop/project-spec/design-decisions.review.md` (it does NOT edit the draft; this file is
 intermediate). Method + format: **`../_shared/spec-pipeline/review-method.md`** and
 `review-template.md`. For this phase the reviewer especially probes: a design decision that
 silently forces a costly architecture but isn't flagged as an architecture input; a key screen with
@@ -173,11 +173,11 @@ Clean review (0 🔴) proceeds without stopping.
 Synthesize draft + review corrections + filled gaps into the final `design-decisions.research.md`.
 Apply fixes, log the applied findings in the Forks / Decisions log, re-research **only**
 still-disputed conventions. What no one could verify goes to `## Open questions`. **Then delete
-`docs/project-spec/design-decisions.review.md`** — its content now lives in the research doc.
+`.buildloop/project-spec/design-decisions.review.md`** — its content now lives in the research doc.
 
 ### Stage 7: Dual output
 Finalize `design-decisions.research.md` (complete `## Sources` and `## Forks / Decisions log`).
-Then write `docs/project-spec/design-decisions.summary.md` from
+Then write `.buildloop/project-spec/design-decisions.summary.md` from
 **`../_shared/spec-pipeline/summary-template.md`** — the design direction in plain language + the
 forks the human must answer + open risks. Format rules:
 **`../_shared/spec-pipeline/output-format.md`**.
@@ -195,7 +195,7 @@ user explicitly approves and asks.
 
 ## Existing-project mode
 
-When `project_type: existing`, read `docs/project-spec/codebase-map.research.md` and record the
+When `project_type: existing`, read `.buildloop/project-spec/codebase-map.research.md` and record the
 **realized design direction** (design system / UI libraries / target platforms / viewport behavior as
 present), then interview to set the TARGET. An AS-IS choice the user wants swapped is drift (`change`)
 AND an input to `design-architecture`'s quality-attribute scenarios. Log drift in the Forks /

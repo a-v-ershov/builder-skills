@@ -9,7 +9,7 @@ contract every build skill (`plan-development`, `build-product`, `implement-feat
 ## Where it lives
 
 ```
-docs/build-plan/
+.buildloop/build-plan/
   .build-config.md            # mode + max_verify_iterations (see build-config.md)
   board.md                    # derived human view — regenerated, never hand-edited
   plan.summary.md             # short human summary of the build plan
@@ -19,7 +19,7 @@ docs/build-plan/
     artifacts/                # verifier evidence (screenshots, logs) referenced from task logs
 ```
 
-`docs/build-plan/` is committed project documentation (like `docs/project-spec/`). Each skill creates
+`.buildloop/build-plan/` is committed project documentation (like `.buildloop/project-spec/`). Each skill creates
 the directory if absent.
 
 ## One file per task — `tasks/<id>-<slug>.md`
