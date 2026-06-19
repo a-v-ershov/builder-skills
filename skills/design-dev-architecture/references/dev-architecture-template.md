@@ -80,9 +80,24 @@ person can run and use the product, not only an agent.>
 
 - **Claude Code config:** <what belongs in project CLAUDE.md; useful settings.json hooks.>
 - **MCP servers:** <which to wire for this stack (db / browser / cloud / …) and why.>
-- **Recommended Anthropic / Claude Code plugins & skills:** <which standard ones improve dev for
-  this stack, and what each gives.>
+- **Recommended Anthropic / Claude Code plugins & skills to install:** <which standard, existing ones
+  improve dev for this stack, and what each gives. (Custom skills to *author* go below.)>
 - **Other agents (if used):** <equivalent config/plugins for Codex / Cursor / … .>
+
+### Custom project skills (wrap the scripts — invocable by name)
+
+> Project-local Claude Code skills to *author* (beyond the standard ones to install above) so a future
+> agent runs the verification loop **by name**. Workflow-level — one skill per verification job, not a
+> thin alias per script. They live in the built project's `.claude/skills/<name>/SKILL.md`, are
+> committed, and **complement `verification.md`** (the machine contract `verify-feature` reads) — they
+> never duplicate `verify-feature`. `setup-dev-environment` scaffolds the skeletons; full authoring is a
+> backlog task, blocked on the script each wraps.
+
+| Skill (name) | Wraps (scripts / harness) | What it does (procedure) | When the agent invokes it |
+|--------------|---------------------------|--------------------------|---------------------------|
+| `/run-integration-tests` | <integration suite / `make test:int`> | bring up env → run suite → report failures | after a change touching <area> |
+| `/verify-flow <name>` | <e2e harness, e.g. Playwright> | seed known state → drive the flow → assert the observable outcome | proving a user flow end-to-end |
+| `/reset-env` | <seed / reset scripts + env-access teardown> | tear down → re-seed a clean known state | when local state is dirty / unknown |
 
 ## Decisions (ADRs)
 

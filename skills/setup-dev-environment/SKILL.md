@@ -1,7 +1,7 @@
 ---
 name: setup-dev-environment
 disable-model-invocation: true
-description: "Turn the dev-architecture spec into a real, runnable local environment. Use after the project-spec pipeline (reads .buildloop/project-spec/dev-architecture.research.md and architecture.research.md + adr/*), as the first step of the build/development phase, to scaffold the repo and bring up the inner loop: install tooling, init the repo (.gitignore, project CLAUDE.md, settings.json), write the Docker Compose stack + seed data + one-command bring-up, and wire the AI tooling (MCP servers, plugins). Runs an internal plan → approve → execute: it plans everything but auto-executes only repo-local scaffolding; global installs, API keys, and Claude plugins run only with explicit confirmation. Idempotent (safe to re-run), detect-state-first. For an existing project (project_type: existing) it runs in adopt mode: it reads the reverse-engineered codebase-map, adopts and extends what's already there (compose, Makefile, existing lint/type tools wired behind make check) and fills only the gaps, never re-scaffolding. Ends with a smoke-test that proves the stack actually comes up, and writes .buildloop/project-setup/verification.md (the concrete run/drive/prove commands the verify-feature skill later reads) plus a setup-log. The first build-phase skill; run before plan-development and build-product."
+description: "Turn the dev-architecture spec into a real, runnable local environment. Use after the project-spec pipeline (reads .buildloop/project-spec/dev-architecture.research.md and architecture.research.md + adr/*), as the first step of the build/development phase, to scaffold the repo and bring up the inner loop: install tooling, init the repo (.gitignore, project CLAUDE.md, settings.json), write the Docker Compose stack + seed data + one-command bring-up, wire the AI tooling (MCP servers, plugins), and scaffold skeleton stubs of the developer/test scripts and the custom project skills (.claude/skills/) the dev-architecture specified. Runs an internal plan → approve → execute: it plans everything but auto-executes only repo-local scaffolding; global installs, API keys, and Claude plugins run only with explicit confirmation. Idempotent (safe to re-run), detect-state-first. For an existing project (project_type: existing) it runs in adopt mode: it reads the reverse-engineered codebase-map, adopts and extends what's already there (compose, Makefile, existing lint/type tools wired behind make check) and fills only the gaps, never re-scaffolding. Ends with a smoke-test that proves the stack actually comes up, and writes .buildloop/project-setup/verification.md (the concrete run/drive/prove commands the verify-feature skill later reads) plus a setup-log. The first build-phase skill; run before plan-development and build-product."
 ---
 
 # Setup Dev Environment Skill
@@ -45,11 +45,15 @@ settled in the spec; orphan setup that traces to nothing is a defect.
   **Stop / PostToolUse hook** in `.claude/settings.json` that runs the gate and feeds failures back.
   Defined once in **`../_shared/build-pipeline/quality-gate.md`**; it executes the test levels + hooks
   `design-dev-architecture` already specified — it does not re-pick tools.
-- **Environment access + developer scripts** (repo-local): whichever env-access mechanism
-  `dev-architecture` chose — the **advisory-lock helper** baked into the bring-up/teardown commands
-  (lock file gitignored) and/or the **per-run isolation** params — plus the **skeleton/stubs of the
-  developer & test scripts** it specified (fast, intentionally-divergent local paths; full
-  implementation is left to backlog tasks). See **`../_shared/build-pipeline/env-access.md`**.
+- **Environment access + developer scripts + custom-skill skeletons** (repo-local): whichever
+  env-access mechanism `dev-architecture` chose — the **advisory-lock helper** baked into the
+  bring-up/teardown commands (lock file gitignored) and/or the **per-run isolation** params — plus the
+  **skeleton/stubs of the developer & test scripts** it specified (fast, intentionally-divergent local
+  paths; full implementation is left to backlog tasks), and the **skeleton `.claude/skills/<name>/
+  SKILL.md` stubs** of the **custom project skills** it specified (the named verification-loop wrappers
+  — frontmatter `name` + discoverable `description` and a thin body invoking the wrapped script, with
+  the procedure left as a TODO; full authoring is a backlog task). See
+  **`../_shared/build-pipeline/env-access.md`**.
 - **The design system** (UI projects only): for a UI project, once the scaffold is up, invoke
   **`create-design-system`** (via the Skill tool) to produce the committed root **`DESIGN.md`** + a
   `.buildloop/project-setup/design-system.md` record — it proposes several candidate systems, renders each as
@@ -130,7 +134,8 @@ Read `.buildloop/project-spec/dev-architecture.research.md` (the inner-loop desi
 verification matrix, AI tooling) and `.buildloop/project-spec/architecture.research.md` (the stack) plus
 `.buildloop/project-spec/adr/*`. List: the components and their local stand-ins, the one-command bring-up,
 the seed strategy, the test/verification matrix, the **environment-access model and the developer/test
-scripts**, and the AI tooling (MCP servers, plugins, CLAUDE.md content). If `dev-architecture.research.md` is missing, tell the user and offer to run
+scripts**, the **custom project skills** to author, and the AI tooling (MCP servers, plugins, CLAUDE.md
+content). If `dev-architecture.research.md` is missing, tell the user and offer to run
 `/design-dev-architecture` first. Read the mode.
 
 ### Stage 1: Detect state (read-only)
@@ -153,8 +158,11 @@ reversibility · idempotency note · already-present?**:
   zero-tolerance, a `make check` target, a pre-commit hook that blocks the commit on red —
   **`../_shared/build-pipeline/quality-gate.md`**), the **env-access helper** (lock baked into
   bring-up + gitignored lock file, and/or per-run isolation params —
-  **`../_shared/build-pipeline/env-access.md`**), and the **skeleton of the developer/test scripts**
-  `dev-architecture` specified. *Auto-applicable (repo-local).*
+  **`../_shared/build-pipeline/env-access.md`**), the **skeleton of the developer/test scripts**
+  `dev-architecture` specified, and the **skeleton `.claude/skills/<name>/SKILL.md` stubs** of the
+  **custom project skills** it specified (frontmatter + thin body invoking the wrapped script; the
+  procedure left as a TODO — full authoring is a backlog task; skeleton template in
+  `references/setup-templates.md` §6). *Auto-applicable (repo-local).*
 - **(C) AI tooling** — `.claude/settings.json` (incl. the **Stop / PostToolUse hook** that runs the
   gate and feeds failures back, **and a `permissions.deny` list** excluding generated/build/vendor
   trees from navigation), the **code-intelligence LSP plugin(s)** for the stack's typed language(s)
@@ -227,8 +235,10 @@ three brownfield specifics. (No re-scaffolding: an existing project very likely 
    adopted and extended (back up before any edit, per the standard rule), never blown away. The
    **quality gate** wires the *existing* lint/format/type-check tools the map found behind one
    `make check` + the hooks, rather than installing new ones (the gate "executes the chosen tools, it
-   doesn't re-pick" — here the chosen tools are the ones already in the repo). Env-access helper and
-   dev-script skeletons are scaffolded only where absent; an existing lock/isolation scheme is adopted.
+   doesn't re-pick" — here the chosen tools are the ones already in the repo). Env-access helper,
+   dev-script skeletons, and custom-skill skeletons are scaffolded only where absent; an existing
+   lock/isolation scheme is adopted, and an existing `.claude/skills/` skill the dev-architecture names
+   is adopted and extended, not overwritten.
    `verification.md` is still written **fresh** from the now-real stack (an existing repo without it is
    "unfinished" by rule 6).
 3. **Smoke-test includes the existing gate's honesty.** "Green" means the existing stack comes up via
@@ -248,5 +258,6 @@ three brownfield specifics. (No re-scaffolding: an existing project very likely 
 7. Stand up the **enforced quality gate** — a red `make check` blocks the commit (pre-commit hook), and
    a Stop hook feeds failures back. The gate executes the spec's test levels + hooks; it doesn't re-pick tools.
 8. Bake the **env-access mechanism** into the bring-up command (lock with lease + stale-reclaim, and/or
-   per-run isolation; gitignore the lock file) and scaffold the **developer/test-script skeletons** —
+   per-run isolation; gitignore the lock file) and scaffold the **developer/test-script skeletons** and
+   the **custom project-skill skeletons** (`.claude/skills/<name>/SKILL.md`) the dev-architecture named —
    full implementation is backlog work.

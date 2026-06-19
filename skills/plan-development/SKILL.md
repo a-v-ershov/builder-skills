@@ -1,6 +1,6 @@
 ---
 name: plan-development
-description: "Turn the finished project spec into a buildable backlog. Use after setup-dev-environment, as the planning step of the build/development phase, to read the committed feature set (.buildloop/project-spec/product-requirements.research.md), the user flows, and the architecture, and emit a kanban backlog under .buildloop/build-plan/: one markdown file per task (type, status, blockers, acceptance criteria, provenance), plus a derived board.md and a short plan.summary.md. Single pass — each task's blocked_by list IS the dependency graph; there is no parallel scheduling. For an existing project (project_type: existing) it runs in delta mode: it diffs the target spec against the reverse-engineered codebase-map and emits ONLY the gap (rework for divergent code, new tasks for unbuilt features, verify tasks for adopted features, a quality-gate setup task), marking already-matching features done. Also runs in amend mode (driven by propagate-changes) to reconcile the backlog with a changed spec via task deltas — add/modify/cancel/reopen-as-rework — never a regenerate. Run before build-product."
+description: "Turn the finished project spec into a buildable backlog. Use after setup-dev-environment, as the planning step of the build/development phase, to read the committed feature set (.buildloop/project-spec/product-requirements.research.md), the user flows, the architecture, and the dev-architecture (incl. its developer/test scripts and the custom project skills that wrap them, which become build-out/authoring tasks), and emit a kanban backlog under .buildloop/build-plan/: one markdown file per task (type, status, blockers, acceptance criteria, provenance), plus a derived board.md and a short plan.summary.md. Single pass — each task's blocked_by list IS the dependency graph; there is no parallel scheduling. For an existing project (project_type: existing) it runs in delta mode: it diffs the target spec against the reverse-engineered codebase-map and emits ONLY the gap (rework for divergent code, new tasks for unbuilt features, verify tasks for adopted features, a quality-gate setup task), marking already-matching features done. Also runs in amend mode (driven by propagate-changes) to reconcile the backlog with a changed spec via task deltas — add/modify/cancel/reopen-as-rework — never a regenerate. Run before build-product."
 ---
 
 # Plan Development Skill
@@ -26,8 +26,9 @@ and no conflict tracking: blockers, and the build loop's one-at-a-time disciplin
 ## Inputs and outputs
 
 - **Reads:** `product-requirements.research.md` (features + acceptance criteria), `user-flows.research.md`,
-  `architecture.research.md`, `dev-architecture.research.md`, and `.buildloop/project-setup/setup-log.md` if
-  present. The root `DESIGN.md` + `.buildloop/project-setup/design-system.md` if present (the design system UI
+  `architecture.research.md`, `dev-architecture.research.md` (incl. its developer/test scripts and the
+  **custom project skills** that wrap them — both become build-out/authoring tasks), and
+  `.buildloop/project-setup/setup-log.md` if present. The root `DESIGN.md` + `.buildloop/project-setup/design-system.md` if present (the design system UI
   feature tasks build against — note it in their `## Description`; don't create mockup tasks, mockups are
   on-demand via `generate-mockups`). For an existing project, also `.buildloop/project-spec/codebase-map.research.md`
   (the as-is code the spec was reconstructed from — delta mode diffs the target spec against it).
@@ -85,9 +86,10 @@ If `product-requirements.research.md` is missing, tell the user and offer to run
 ### Stage 1: Derive tasks
 Per **`planning-method.md`**: one `feature` task per committed feature (split a large one only when its
 criteria are independently buildable/verifiable); `setup` tasks for build-time prerequisites not
-already done; type each, write `traces_to`, the one-line `summary` + full `## Description`, and the
-`acceptance` criteria. In interactive, confirm the breakdown (how many tasks, any splits) before
-writing.
+already done, **including building out the developer/test scripts and authoring the custom project
+skills** the dev-architecture named (each custom-skill task `blocked_by` the script it wraps); type
+each, write `traces_to`, the one-line `summary` + full `## Description`, and the `acceptance` criteria.
+In interactive, confirm the breakdown (how many tasks, any splits) before writing.
 
 ### Stage 2: Blockers (the implicit graph)
 Set each task's `blocked_by` from real constraints — data/domain order, auth before user-scoped

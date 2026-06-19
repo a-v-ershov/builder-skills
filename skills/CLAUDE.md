@@ -44,7 +44,7 @@ pauses at each gate / `autopilot` runs through and logs every decision; `final_s
 | 4 | `create-user-flows` | `user-flows.research.md` |
 | 5 | `define-design-decisions` | `design-decisions.research.md` — the product→technical bridge (design direction, not mockups) |
 | 6 | `design-architecture` | `architecture.research.md` (+ `adr/`) — requirements-first system architecture |
-| 7 | `design-dev-architecture` | `dev-architecture.research.md` (+ `adr/`) — the AI-first inner loop |
+| 7 | `design-dev-architecture` | `dev-architecture.research.md` (+ `adr/`) — the AI-first inner loop, incl. the custom project skills to author that wrap its dev/test scripts |
 
 **Existing project (brownfield):** with `project_type: existing`, `map-codebase` runs first to chart the
 as-is code, then phases 1–7 run in **existing-project mode** — reconstructing a *target* spec from the map

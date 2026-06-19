@@ -1,6 +1,6 @@
 ---
 name: design-dev-architecture
-description: "Design the development-time architecture that lets the product be built fast and well with AI: how to run the whole product locally (Docker Compose topology, local stand-ins for cloud/managed services with prod-equivalent APIs, seed data), how it is tested in an AI-drivable way (test levels + purpose-built developer/test scripts + an e2e harness an agent can run and verify, e.g. Playwright for web), how concurrent access to the single shared local environment is coordinated (lock and/or per-run isolation), and how the AI tooling is configured for the chosen stack (Claude Code config, which Anthropic plugins/skills to install, MCP servers, other agents) — backed by research into the current tools and an adversarial review pass. Use after design-architecture (reads .buildloop/project-spec/architecture.research.md and .buildloop/project-spec/user-flows.research.md) as the final, technical step of the create-project-spec pipeline. Writes a detailed, source-cited .buildloop/project-spec/dev-architecture.research.md (+ adr/*) plus a short human summary; an internal reviewer pass checks the draft and is merged in, then removed. The inner-loop / developer-experience layer — it never redesigns the production architecture or re-opens stack choices."
+description: "Design the development-time architecture that lets the product be built fast and well with AI: how to run the whole product locally (Docker Compose topology, local stand-ins for cloud/managed services with prod-equivalent APIs, seed data), how it is tested in an AI-drivable way (test levels + purpose-built developer/test scripts + an e2e harness an agent can run and verify, e.g. Playwright for web), how concurrent access to the single shared local environment is coordinated (lock and/or per-run isolation), and how the AI tooling is configured for the chosen stack (Claude Code config, which Anthropic plugins/skills to install, MCP servers, other agents) — including the custom, project-local Claude Code skills to author that wrap those dev/test scripts and the e2e harness so future agents run the verification loop by name — backed by research into the current tools and an adversarial review pass. Use after design-architecture (reads .buildloop/project-spec/architecture.research.md and .buildloop/project-spec/user-flows.research.md) as the final, technical step of the create-project-spec pipeline. Writes a detailed, source-cited .buildloop/project-spec/dev-architecture.research.md (+ adr/*) plus a short human summary; an internal reviewer pass checks the draft and is merged in, then removed. The inner-loop / developer-experience layer — it never redesigns the production architecture or re-opens stack choices."
 ---
 
 # Design Dev Architecture Skill
@@ -84,6 +84,14 @@ Read `.buildloop/project-spec/.spec-config.md` for `mode` (`interactive` | `auto
   divergence is a risk to close). Purpose-built **developer/test scripts** *deliberately diverge* for
   speed (skip expensive stages, cached intermediates, presets) — that divergence is a documented,
   intentional tradeoff, not a risk. Design both.
+- **Codify the loop into named skills.** The dev/test scripts and the e2e harness are raw capability;
+  a future agent shouldn't have to rediscover the right commands each session. Specify **custom,
+  project-local Claude Code skills** that wrap them — **workflow-level** (one skill per verification
+  job, e.g. `/run-integration-tests`, `/verify-flow <name>`, `/reset-env`), **not** thin one-per-script
+  aliases. They live in the built project's `.claude/skills/`, are committed, and **complement
+  `verification.md`** (the machine contract `verify-feature` reads) — they never duplicate
+  `verify-feature` or re-implement what a script already does. `setup-dev-environment` scaffolds their
+  skeletons; they are authored fully as backlog tasks.
 - **The shared env is a single resource.** Coordinate access to it (an advisory lock baked into the
   bring-up command, with a lease + stale-reclaim) or isolate per run (ephemeral data dir / unique
   project + ports) — never let two actors clobber it, and never let a killed holder deadlock it. See
@@ -112,7 +120,7 @@ Read `.buildloop/project-spec/.spec-config.md` for `mode` (`interactive` | `auto
 
 ```
 - [ ] Stage 0: Intake — load architecture.research.md + user-flows.research.md; components/tools, prod services, flows; dev constraints; read mode
-- [ ] Stage 1: Elicit — local-run (Run it; env-access; dev/test scripts) + the verification loop (Drive/Prove/Unblock × UX/Backend/E2E) + AI tooling
+- [ ] Stage 1: Elicit — local-run (Run it; env-access; dev/test scripts) + the verification loop (Drive/Prove/Unblock × UX/Backend/E2E) + AI tooling (incl. custom project skills wrapping the scripts)
 - [ ] Stage 2: Research — verify the tools (local stand-in parity / browser-driving + e2e framework / MCP servers / current plugins) (adaptive)
 - [ ] Stage 3: Draft — assemble; ADRs; draft dev-architecture.research.md (+ adr/*)
 - [ ] Stage 4: Review — spawn reviewer → dev-architecture.review.md (intermediate)
@@ -184,6 +192,20 @@ When a fork is blocked on context only the user holds, invoke `gather-context` s
    so `implement-feature` follows them without re-reading the brief; log each as a fork with
    `Source = preference` (see `../_shared/spec-pipeline/elicitation-method.md` → "Read the brief
    first").
+   Then specify the **custom, project-local Claude Code skills to author** that wrap the dev/test
+   scripts (pillar 1) and the verification loop (pillar 2) into named, invocable jobs — beyond
+   *installing existing* plugins, this is *authoring new* skills around **this** project's own
+   scripts. Keep them **workflow-level** (a small set covering whole verification jobs —
+   `/run-integration-tests`, `/verify-flow <name>`, `/reset-env` — not a thin alias per script).
+   For each name: its **verb-name** + a discoverable third-person `description` (WHAT it does, WHEN
+   to use it); the **script(s) / harness it wraps**; the **procedure it encodes** (bring up env →
+   drive → assert the observable outcome → report); **when the agent invokes it**. They live in the
+   built project's `.claude/skills/<name>/SKILL.md`, are **committed**, follow standard
+   skill-authoring shape (a thin body that runs the wrapped script and reads its result — the depth
+   is in the script, not the skill), and **complement `verification.md`** — they reuse its commands
+   for ad-hoc development & fixing, they do **not** duplicate `verify-feature` or re-do what a script
+   already does. `setup-dev-environment` scaffolds each skeleton; full authoring is a backlog task
+   (`plan-development`), blocked on the script it wraps.
 
 - **interactive:** ask, grouped by pillar; do not dump everything at once.
 - **autopilot:** choose each from the architecture + (stage 2) tool facts + best judgment; record
@@ -228,7 +250,11 @@ doesn't exist; a local service or test that traces to no component or flow; over
 developer/test script whose purpose or intentional divergence isn't documented (or one drifting toward
 re-implementing prod); **no fast path**, forcing the agent to run the full expensive stack just to
 verify a small change; an env two actors can clobber with no lock or isolation, or a lock with no
-stale-reclaim (a killed agent deadlocks the env).
+stale-reclaim (a killed agent deadlocks the env). And on the **custom project skills**: a skill that
+duplicates `verify-feature` or just restates `verification.md`; a skill wrapping a script that doesn't
+exist (or isn't a planned dev/test script); a thin one-per-script alias that adds no procedure; or the
+inverse — a clearly-useful verification job (run integration tests, reset the env, drive a flow
+end-to-end) with **no** skill wrapping it.
 
 ### Stage 5: Conflict gate
 If the review found 🔴 critical findings:
@@ -310,6 +336,8 @@ When invoked by `propagate-changes` with an upstream change, switch to **amend m
    `design-architecture` instead.
 7. Every tool fact is cited; every fork is logged; the review always runs (both modes), is merged
    in, and the review file is then deleted.
-8. Design the **environment-access model** (advisory lock and/or per-run isolation) and the
-   **developer/test scripts** (fast, intentionally-divergent local paths) as first-class deliverables —
-   never leave the shared env uncoordinated or the agent without a fast path.
+8. Design the **environment-access model** (advisory lock and/or per-run isolation), the
+   **developer/test scripts** (fast, intentionally-divergent local paths), and the **custom project
+   skills** that wrap those scripts/harness into named verification jobs as first-class deliverables —
+   never leave the shared env uncoordinated, the agent without a fast path, or the verification loop
+   uncodified. The custom skills complement `verification.md`; they never duplicate `verify-feature`.

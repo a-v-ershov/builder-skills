@@ -33,6 +33,7 @@ placeholders from the spec and the detected state.
 | pre-commit hook | runs `make check`, blocks commit on red | quality-gate.md | yes | no |
 | env-access | lock helper baked into bring-up (gitignored lock) and/or per-run isolation | env-access.md | yes | no |
 | dev/test scripts | skeleton of fast local scripts (full impl = backlog) | dev-architecture / dev scripts | yes | no |
+| custom project skills | skeleton `.claude/skills/<name>/SKILL.md` stubs (full authoring = backlog; §6) | dev-architecture / custom skills | yes | no |
 | project CLAUDE.md | stack notes + commands **+** project documentation map (`_shared/agent-guide.md`) | AI tooling | yes | partial (back up) |
 
 ## C. AI tooling  (config auto; plugin/MCP installs gated)
@@ -211,3 +212,37 @@ two settings blocks are the mechanism.
 - **`enabledPlugins` records the choice**; the actual install is gated like every other plugin/global
   step. Add the service MCP plugins the dev-architecture tooling section named (e.g. a database or
   source-control MCP) the same way.
+
+## 6. `.claude/skills/<name>/SKILL.md` — custom project-skill skeleton
+
+For each **custom project skill** the dev-architecture's *Custom project skills* table named, scaffold a
+skeleton at `.claude/skills/<name>/SKILL.md` in the **built project's** repo (not buildloop's). These are
+**committed**, project-local, and **complement `verification.md`** — they wrap a dev/test script or the
+e2e harness into a named, invocable verification job; they never duplicate `verify-feature`. The skeleton
+carries the discoverable frontmatter and a thin body that calls the wrapped script, with the procedure
+left as a TODO — `plan-development` files a backlog task to author it fully (blocked on the wrapped
+script). Repo-local, so auto-applicable; never overwrite an existing skill of the same name.
+
+```markdown
+---
+name: <verb-name>            # e.g. run-integration-tests
+description: "<Third-person: WHAT it does and WHEN to use it — this is how Claude selects the skill.
+  e.g. Run the integration suite against the local stack and report failures. Use after a change that
+  touches <area>, or before pushing.>"
+---
+
+# <Verb-name>
+
+<!-- TODO (backlog: author fully) — wraps: <script / harness, e.g. `make test:int`>.
+     Complements .buildloop/project-setup/verification.md; does NOT duplicate verify-feature. -->
+
+1. Bring up / ensure the local env (acquire the env-access lock — see verification.md).
+2. Run the wrapped script: `<command>`.
+3. Assert the observable outcome (exit code · asserted rows/logs/screenshots — not "it ran").
+4. Report pass/fail with the evidence; on fail, surface the failing case for the agent to fix.
+```
+
+- **Workflow-level, not a thin alias.** Each skill encodes a whole verification job (bring up → drive →
+  assert → report), so it earns its name; a one-liner that just shells out adds nothing.
+- **The depth lives in the wrapped script**, not the skill — the skill is the discoverable, reusable
+  entry point future agents invoke by name.

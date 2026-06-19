@@ -13,8 +13,9 @@ the blockers a task carries are the graph.
   a feature task's criteria and surface cross-feature ordering.
 - `.buildloop/project-spec/architecture.research.md` + `dev-architecture.research.md` — the components and
   the local stack, to size tasks and seed `setup` tasks and dependencies (e.g. auth before features
-  that need a logged-in user); also the **developer/test scripts** to build out (their skeleton is
-  scaffolded by `setup-dev-environment`; the full implementation is backlog work).
+  that need a logged-in user); also the **developer/test scripts** and the **custom project skills**
+  that wrap them to build out (their skeletons are scaffolded by `setup-dev-environment`; the full
+  implementation/authoring is backlog work).
 - `.buildloop/project-setup/setup-log.md` (if present) — what the environment already has, so `setup` tasks
   aren't re-created.
 - The root `DESIGN.md` + `.buildloop/project-setup/design-system.md` (if present) — the committed design
@@ -46,6 +47,13 @@ invented here.
    skeletons are scaffolded by `setup-dev-environment`, so add tasks to **build them out fully** (type
    `setup` or `feature`, `traces_to` the dev-architecture dev-scripts section). They widen the agent's
    verification loop, so blockers usually put the foundational ones early.
+7. **Custom-skill tasks.** `dev-architecture.research.md`'s *Custom project skills* table names the
+   project-local Claude Code skills that wrap those scripts/harness into named verification jobs
+   (`/run-integration-tests`, `/verify-flow`, `/reset-env`); their skeletons are scaffolded by
+   `setup-dev-environment` under `.claude/skills/`, so add one `setup` task per skill to **author it
+   fully** (`traces_to` the dev-architecture custom-skills section). Each is **`blocked_by` the
+   dev/test-script-buildout task(s) it wraps** — a skill can't be verified until the script it runs
+   works. They complement `verification.md`; a task that merely restates `verify-feature` doesn't belong.
 
 ## Setting blockers (the implicit graph)
 
